@@ -1,0 +1,23 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class VirtualReality : MonoBehaviour
+{
+    public float EyeDistanceInCM;
+    // Start is called before the first frame update
+    void Start()
+    {
+        Camera camL = GameObject.Find("LeftCam").GetComponent<Camera>();
+        Camera camR = GameObject.Find("RightCam").GetComponent<Camera>();
+
+        camL.transform.localPosition -= new Vector3(EyeDistanceInCM / 200, 0, 0);
+        camR.transform.localPosition += new Vector3(EyeDistanceInCM / 200, 0, 0);
+
+        camL.backgroundColor = new Color(49, 77, 121);
+        camR.backgroundColor = new Color(49, 77, 121);
+
+        camL.clearFlags = CameraClearFlags.Skybox;
+        camR.clearFlags = CameraClearFlags.Skybox;
+    }
+}
