@@ -74,7 +74,7 @@ namespace FFmpegOut
             if (++_frameDropCount != 10) return;
 
             Debug.LogWarning(
-                "Significant frame droppping was detected. This may introduce " +
+                "Significant frame dropping was detected. This may introduce " +
                 "time instability into output video. Decreasing the recording " +
                 "frame rate is recommended."
             );
@@ -129,9 +129,12 @@ namespace FFmpegOut
         void Update()
         {
             var camera = GetComponent<Camera>();
+            
+            GameObject experiment = GameObject.Find("Experiment");
+            int frame_num = experiment.GetComponent<MainTask>().frame_number;
 
             // Lazy initialization
-            if (_session == null)
+            if (_session == null && frame_num == 10) // frame_num ADDED BY EDO TO CONTROL START OF RECORDING 
             {
                 // Give a newly created temporary render texture to the camera
                 // if it's set to render to a screen. Also create a blitter
@@ -155,44 +158,49 @@ namespace FFmpegOut
                 _startTime = Time.time;
                 _frameCount = 0;
                 _frameDropCount = 0;
+
             }
 
             var gap = Time.time - FrameTime;
             var delta = 1 / _frameRate;
 
-            if (gap < 0)
+            if (frame_num > 10)
             {
-                // Update without frame data.
-                _session.PushFrame(null);
-            }
-            else if (gap < delta)
-            {
-                // Single-frame behind from the current time:
-                // Push the current frame to FFmpeg.
-                _session.PushFrame(camera.targetTexture);
-                _frameCount++;
-            }
-            else if (gap < delta * 2)
-            {
-                // Two-frame behind from the current time:
-                // Push the current frame twice to FFmpeg. Actually this is not
-                // an efficient way to catch up. We should think about
-                // implementing frame duplication in a more proper way. #fixme
-                _session.PushFrame(camera.targetTexture);
-                _session.PushFrame(camera.targetTexture);
-                _frameCount += 2;
-            }
-            else
-            {
-                // Show a warning message about the situation.
-                WarnFrameDrop();
+                if (gap < 0)
+                {
+                    // Update without frame data.
+                    _session.PushFrame(null);
+                }
+                else if (gap < delta)
+                {
+                    // Single-frame behind from the current time:
+                    // Push the current frame to FFmpeg.
+                    _session.PushFrame(camera.targetTexture);
+                    _frameCount++;
+                }
+                else if (gap < delta * 2)
+                {
+                    // Two-frame behind from the current time:
+                    // Push the current frame twice to FFmpeg. Actually this is not
+                    // an efficient way to catch up. We should think about
+                    // implementing frame duplication in a more proper way. #fixme
+                    _session.PushFrame(camera.targetTexture);
+                    _session.PushFrame(camera.targetTexture);
+                    _frameCount += 2;
+                }
+                else
+                {
+                    // Show a warning message about the situation.
+                    WarnFrameDrop();
 
-                // Push the current frame to FFmpeg.
-                _session.PushFrame(camera.targetTexture);
+                    // Push the current frame to FFmpeg.
+                    _session.PushFrame(camera.targetTexture);
 
-                // Compensate the time delay.
-                _frameCount += Mathf.FloorToInt(gap * _frameRate);
+                    // Compensate the time delay.
+                    _frameCount += Mathf.FloorToInt(gap * _frameRate);
+                }
             }
+
         }
 
         #endregion

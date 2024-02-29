@@ -10,6 +10,7 @@ using UnityEditor;
 using System.Linq;
 using PupilLabs;
 
+
 public class MainTask : MonoBehaviour
 {
 
@@ -18,8 +19,8 @@ public class MainTask : MonoBehaviour
     float time_to_end = 0f;
     public int nullpositionTime; //for releasing when juicy
     [HideInInspector] public long start_ms; // zero della registrazione in ms
-    [HideInInspector] private int frame_number = 0; // internal frame counter
-    [HideInInspector] public bool exp_has_started = false; // counter del numero di frame
+    [HideInInspector] public int frame_number = 0; // internal frame counter
+    [HideInInspector] public bool exp_has_started = false;
     #endregion
 
     #region Saving variables
@@ -104,9 +105,9 @@ public class MainTask : MonoBehaviour
     public bool RESET_AT_TARGET_NOT_GIVEN;
 
     [Header("Cameras")]
-    public Camera camM;
-    public Camera camL;
-    public Camera camR;
+    Camera camM;
+    Camera camL;
+    Camera camR;
     float targetAspect = 16f / 9f;
 
     [HideInInspector] public int current_trial = 0;
@@ -312,7 +313,6 @@ public class MainTask : MonoBehaviour
         camM = GameObject.Find("Main Camera").GetComponent<Camera>();
         camL = GameObject.Find("Left Camera").GetComponent<Camera>();
         camR = GameObject.Find("Right Camera").GetComponent<Camera>();
- 
 
         reset();
     }
@@ -320,18 +320,18 @@ public class MainTask : MonoBehaviour
     
     void Update()
     {
-
-        // Adapt aspect ratio
-        if (camM) { AdaptAspectRatio(camM); }
-        if (camL) { AdaptAspectRatio(camL); }
-        if (camR) { AdaptAspectRatio(camR); }
+        if (camM) { AdaptAspectRatio(camM, targetAspect); }
+        if (camL) { AdaptAspectRatio(camL, targetAspect); }
+        if (camR) { AdaptAspectRatio(camR, targetAspect); }
 
         frame_number++;
-
         if (frame_number == 10) //Unity needs some frames to start, please keep this at 10, Gianni
         {
-            Camera.main.backgroundColor = Color.black;
-            Debug.Log("START");
+            camM.backgroundColor = Color.black;
+            camL.backgroundColor = Color.black;
+            camR.backgroundColor = Color.black;
+
+            Debug.Log("START OF TRIAL");
 
             // TRIGGER START REGISTRAZIONE
             experiment.GetComponent<Ardu>().SendStartRecordingOE();
@@ -549,6 +549,7 @@ public class MainTask : MonoBehaviour
         
     }
 
+
     void OnApplicationQuit() // se l'app si interrompe (es. pause dell'editor) senza  che venga premuto 'esc'
     {
         experiment.GetComponent<Ardu>().SendStopRecordingOE();
@@ -678,8 +679,10 @@ public class MainTask : MonoBehaviour
         }
     }
 
-    void AdaptAspectRatio(Camera cam)
+    void AdaptAspectRatio(Camera cam, float targetAspect)
     {
+        Debug.Log($"Adapting {cam} to 16:9");
+
         // Determine the game window's current aspect ratio
         float windowAspect = (float)Screen.width / (float)Screen.height;
 

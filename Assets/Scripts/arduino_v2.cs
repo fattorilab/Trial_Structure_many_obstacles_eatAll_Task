@@ -5,6 +5,7 @@ using UnityEngine;
 using System.Threading;
 using System.Text;
 using System.Linq;
+
  public class arduino
 {
     SerialPort sp;

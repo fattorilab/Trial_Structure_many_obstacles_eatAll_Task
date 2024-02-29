@@ -14,7 +14,6 @@ public class Saver : MonoBehaviour
     #region Time variables
     [HideInInspector] public long starttime = 0;
     [HideInInspector] private long time = 0;
-    [HideInInspector] public int frame_counter;
     bool got_start = false;
     #endregion
 
@@ -31,13 +30,6 @@ public class Saver : MonoBehaviour
     GameObject experiment;
     [HideInInspector] public GameObject PupilData;
     PupilDataStream PupilDataStream;
-    #endregion
-
-    #region Task general variables
-    [HideInInspector] int current_trial;
-    [HideInInspector] int current_condition;
-    [HideInInspector] int current_state;
-    [HideInInspector] int error_state;
     #endregion
 
     void Start()
@@ -58,12 +50,6 @@ public class Saver : MonoBehaviour
         player = GameObject.Find("Player");
         #endregion
 
-        #region Get Task variables
-        current_trial = main.current_trial;
-        current_state = main.current_state;
-        error_state = main.error_state;
-        #endregion
-
         // Manage time
         starttime = System.DateTimeOffset.Now.ToUnixTimeMilliseconds() + 1000000;
         addObject("Seed", main.seed, main.seed, main.seed, "Seed");
@@ -71,8 +57,7 @@ public class Saver : MonoBehaviour
 
     void LateUpdate()
     {
-        // Add current frame data if not first state
-        frame_counter++;
+        // Add current frame data
         addDataPerFrame();
 
         if (!got_start)
@@ -112,7 +97,7 @@ public class Saver : MonoBehaviour
         long milliseconds = System.DateTimeOffset.Now.ToUnixTimeMilliseconds();
         if (starttime == 0) { starttime = milliseconds; }
         PerFrameData[(PerFrameData.Count - 1)].Add((milliseconds - starttime).ToString());
-        PerFrameData[(PerFrameData.Count - 1)].Add((frame_counter).ToString());
+        PerFrameData[(PerFrameData.Count - 1)].Add((main.frame_number).ToString());
         // Seed
         PerFrameData[(PerFrameData.Count - 1)].Add((main.seed).ToString("F5"));
         // Number of trials
@@ -213,12 +198,6 @@ public class Saver : MonoBehaviour
         StringBuilder sb_PerFrame = new StringBuilder();
         StringBuilder sb_Supplement = new StringBuilder();
         string Line = "";
-
-        //Create Data writer
-        //sb_PerFrame.AppendLine("Time; trial; trial_with_repeats; phase; close_active; middle_active; far_active; correct_target; interval; " +
-        //    "arduino_x; arduino_y; player_x; player_z; player_orientation; reward_counter" +
-        //    "eye_vec_lx; eye_vec_ly; eye_vec_lz; eye_vec_rx; eye_vec_ry; eye_vec_rz; eye_theta_l; eye_theta_r; eye_phi_l; eye_phi_r;" +
-        //    "eye_diameter_l; eye_diameter_r; eye_confidence_l; eye_confidence_r");
 
         #region Create Data writer
         string general_vars = "Unity_timestamp; Frames; Seed; ";

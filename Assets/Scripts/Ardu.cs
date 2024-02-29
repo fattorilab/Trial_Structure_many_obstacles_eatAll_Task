@@ -69,6 +69,11 @@ public class Ardu : MonoBehaviour
             Debug.Log("Reward");
             reward_counter += 1;
         }
+        else if (!ardu_working && testing) // FOR DEBUGGING
+        {
+            Debug.Log("Reward");
+            reward_counter += 1;
+        }
     }
     // TRIGGER 1 BNC 8(T1)
     public void SendStartRecordingOE()
