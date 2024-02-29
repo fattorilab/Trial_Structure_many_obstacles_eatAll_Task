@@ -57,7 +57,7 @@ public class Ardu : MonoBehaviour
 
         if (Input.GetKeyDown("space"))
         {
-            SendReward(GetComponent<Forest>().reward_length);
+            SendReward(GetComponent<MainTask>().reward_length);
         }
     }
 

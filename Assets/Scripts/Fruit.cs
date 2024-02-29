@@ -35,8 +35,8 @@ public class Fruit : MonoBehaviour
         experiment = GameObject.Find("Experiment");
 
 
-        min_distance = experiment.GetComponent<Forest>().minimumDistance;
-        min_time2get_reward = experiment.GetComponent<Forest>().minimumRewardTime;
+        min_distance = experiment.GetComponent<MainTask>().minimumDistance;
+        min_time2get_reward = experiment.GetComponent<MainTask>().minimumRewardTime;
 
         
         beginTimeJuicy = Time.time;
@@ -71,9 +71,8 @@ public class Fruit : MonoBehaviour
                 if (player.GetComponent<Movement>().presstime > min_time2get_reward && !juicy && !player.GetComponent<Movement>().is_eating) //get juicy
                 {
                     GetComponent<Renderer>().material = juicy_mat;
-                    //if (experiment.GetComponent<Forest>().immediateReward) { experiment.GetComponent<Ardu>().SendReward(experiment.GetComponent<Forest>().reward_length); }
+                    //if (experiment.GetComponent<MainTask>().immediateReward) { experiment.GetComponent<Ardu>().SendReward(experiment.GetComponent<MainTask>().reward_length); }
                     beginTimeJuicy = Time.time;
-                    experiment.GetComponent<TriggerBox>().SendToTriggerBox(4);
                     juicy = true;
                     player.GetComponent<Movement>().is_eating = true;
                 }
@@ -95,13 +94,12 @@ public class Fruit : MonoBehaviour
                     beginTimeJuicy = Time.time;
                     fake_juicy = true;
                     player.GetComponent<Movement>().is_eating = true;*/
-                    experiment.GetComponent<TriggerBox>().SendToTriggerBox(13);
                     experiment.GetComponent<Saver>().addObject(transform.name,
                                                             transform.position.x,
                                                             transform.position.z,
                                                             transform.eulerAngles.y, "ObviouslyWrongFruitTrigger");
                     obviously_wrong_but_possible = false;
-                    experiment.GetComponent<Forest>().phase = 98;
+                    experiment.GetComponent<MainTask>().phase = 98;
                 }
             }
             else if (chosen)
@@ -154,7 +152,7 @@ public class Fruit : MonoBehaviour
 
 
                 //if released for nullpositionTime
-                nulltime = (float)experiment.GetComponent<Forest>().nullpositionTime / 1000;
+                nulltime = (float)experiment.GetComponent<MainTask>().nullpositionTime / 1000;
                 if ((Time.time - releasetime) > nulltime && !eaten)
                 {
                     GetComponent<Renderer>().material = eaten_mat;
@@ -163,33 +161,31 @@ public class Fruit : MonoBehaviour
                     //eating
                     if (juicy) 
                     {
-                        experiment.GetComponent<TriggerBox>().SendToTriggerBox(2);
                         experiment.GetComponent<Saver>().addObject(transform.name,
                                                                 transform.position.x,
                                                                 transform.position.z,
                                                                 transform.eulerAngles.y, "FruitTrigger");
                         juicy = false;
-                        experiment.GetComponent<Ardu>().SendReward(experiment.GetComponent<Forest>().reward_length);
+                        experiment.GetComponent<Ardu>().SendReward(experiment.GetComponent<MainTask>().reward_length);
 
                         if (multiple_fruit_mode)
                         {
                             player.GetComponent<Movement>().is_eating = false;
-                            experiment.GetComponent<Forest>().fruit_eaten_notification();
+                            experiment.GetComponent<MainTask>().fruit_eaten_notification();
                         } else
                         {
-                            experiment.GetComponent<Forest>().phase = 99;
+                            experiment.GetComponent<MainTask>().phase = 99;
                         }
                         
                         
                     } else if (fake_juicy)
                     {
-                        experiment.GetComponent<TriggerBox>().SendToTriggerBox(3);
                         experiment.GetComponent<Saver>().addObject(transform.name,
                                                                 transform.position.x,
                                                                 transform.position.z,
                                                                 transform.eulerAngles.y, "WrongFruitTrigger");
                         fake_juicy = false;
-                        experiment.GetComponent<Forest>().phase = 98;
+                        experiment.GetComponent<MainTask>().phase = 98;
                     }
                     
 

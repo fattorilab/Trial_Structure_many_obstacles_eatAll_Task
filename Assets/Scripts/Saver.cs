@@ -6,217 +6,197 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEditor;
-using UnityEditor.Recorder;
-using UnityEditor.Recorder.Input;
 using System;
 using PupilLabs;
 
 public class Saver : MonoBehaviour
 {
+    #region Time variables
+    [HideInInspector] public long starttime = 0;
+    [HideInInspector] private long time = 0;
+    [HideInInspector] public int frame_counter;
+    bool got_start = false;
+    #endregion
 
-    // Recording and saving
-    public long starttime = 0;
-    private long time = 0;
-    public bool RECORD = false;
-    public int MovieWidth = 1280;
-    public int MovieHeight = 720;
-    public string movieFilePath;
-    public bool Want2Save = false;
-    public string csvFilePath;
+    #region Saving variables
+    [HideInInspector] public bool RECORD;
+    [HideInInspector] public string path_to_data;
+    #endregion
 
-
-    // Experiment objects
-    Forest forest;
-    Ardu controller;
-    //EyeTrackingSaver eyeTrackingSaver;
-    GameObject player;
-    public Camera mainCam;
-    public Camera leftCam;
-    public Camera rightCam;
+    #region GameObjects and components
+    MainTask main; // Experiment main script
+    Ardu ardu;
     GameObject DB;
-    public int lastIDFromDB;
+    GameObject player;
+    GameObject experiment;
+    [HideInInspector] public GameObject PupilData;
+    PupilDataStream PupilDataStream;
+    #endregion
 
-    public string hit_info = "None"; //For Debugging
-
-    public GameObject PupilData;
-    PupilDataStream pupilDataStream;
-
-    RecorderControllerSettings video_settings;
-    MovieRecorderSettings m_SettingsCamera1;
-    private RecorderController mainRecorderController;
-
-    // TEST
-    private RecorderController recorderController;
-
+    #region Task general variables
+    [HideInInspector] int current_trial;
+    [HideInInspector] int current_condition;
+    [HideInInspector] int current_state;
+    [HideInInspector] int error_state;
+    #endregion
 
     void Start()
     {
-
-        //if (Application.systemLanguage == SystemLanguage.German)
-        //{
-        //    filePath = "C:/Users/g_brem02/sciebo/Promotion/2xMonkey/data/";
-        //}
-        //else
-        //{   //------------------------------------------------------------------ mod path marrti 29/11/23
-        //    //PC ALIEN 
-        //    //filePath = "/Users/fatto/Documents/Registrazioni VR/MEF27/DATI/"; 
-        //    //PC_TELECAMERE -----------------------------------------------------------------------------
-        //    // filePath = "C:/Users/admin/Desktop/Registrazioni_VR/MEF27/DATI/"; 
-        //    filePath = "C:/Users/edoar/Desktop/Fattori_lab/test";
-        //}
-
         System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
 
-        if (RECORD)
-        {
-            Debug.Log("Movie files will be saved in " + movieFilePath);
-        }
+        #region Choose Monkey and set path
+        experiment = GameObject.Find("Experiment");
+        RECORD = experiment.GetComponent<MainTask>().RECORD;
+        path_to_data = experiment.GetComponent<MainTask>().path_to_data;
+        #endregion
 
-        if (Want2Save)
-        {
-            Debug.Log("CSV files will be saved in " + csvFilePath);
-        }
-
-        // Fecth experiment 
-        forest = GetComponent<Forest>();
-        controller = GetComponent<Ardu>();
-        pupilDataStream = PupilData.GetComponent<PupilDataStream>();
-
-        // Fetch database
+        #region Get GameObjects and Components
+        main = GetComponent<MainTask>();
+        ardu = GetComponent<Ardu>();
+        PupilDataStream = PupilData.GetComponent<PupilDataStream>();
         DB = GameObject.Find("DB");
-        lastIDFromDB = DB.GetComponent<InteractWithDB>().GetLastIDfromDB();
-
-        // Fetch player
-        //target = GameObject.Find("Target");
         player = GameObject.Find("Player");
+        #endregion
+
+        #region Get Task variables
+        current_trial = main.current_trial;
+        current_state = main.current_state;
+        error_state = main.error_state;
+        #endregion
 
         // Manage time
-        //starttime = System.DateTimeOffset.Now.ToUnixTimeMilliseconds();
         starttime = System.DateTimeOffset.Now.ToUnixTimeMilliseconds() + 1000000;
-        addObject("Seed", forest.seed, forest.seed, forest.seed, "Seed");
-
-        // Start the recording
-        #if UNITY_EDITOR
-        
-                if (RECORD)
-                {
-                    StartRecording_all();
-                }
-
-        #endif
+        addObject("Seed", main.seed, main.seed, main.seed, "Seed");
     }
 
-    bool got_start = false;
     void LateUpdate()
     {
-        time = System.DateTimeOffset.Now.ToUnixTimeMilliseconds() - starttime;
-        writeData();
+        // Add current frame data if not first state
+        frame_counter++;
+        addDataPerFrame();
+
+        if (!got_start)
+        {
+            if (main.exp_has_started)
+            {
+                starttime = main.start_ms;
+                got_start = true;
+            }
+        }
 
         if (Input.GetKeyDown("escape"))
         {
             Application.Quit();
-        }
-
-        if (!got_start)
-        {
-            if (forest.exp_has_started)
-            {
-                starttime = forest.start_ms;
-                got_start = true;
-            }
         }
     }
 
     private void OnApplicationQuit()
     {
         saveAllData(";");
+        Application.Quit();
     }
 
+    #region DEFINE FRAME DATA
+
+    // Initiate List to store data
     List<List<string>> PerFrameData = new List<List<string>>();
-    List<List<string>> OneTimeData = new List<List<string>>();
 
-    float[] EyeInfo = new float[6];
-
-    private void writeData() //add data per frame
+    private void addDataPerFrame() //add data per frame
     {
+        //Add new sub List
+        PerFrameData.Add(new List<string>());
 
-        PerFrameData.Add(new List<string>()); //Adds new sub List
-                                              //PerFrameData[(PerFrameData.Count - 1)].Add((milliseconds - starttime).ToString());
+        // PerFrameData[(PerFrameData.Count - 1)].Add((time).ToString());
 
-        PerFrameData[(PerFrameData.Count - 1)].Add((time).ToString());
+        // Frames and time
+        long milliseconds = System.DateTimeOffset.Now.ToUnixTimeMilliseconds();
+        if (starttime == 0) { starttime = milliseconds; }
+        PerFrameData[(PerFrameData.Count - 1)].Add((milliseconds - starttime).ToString());
+        PerFrameData[(PerFrameData.Count - 1)].Add((frame_counter).ToString());
+        // Seed
+        PerFrameData[(PerFrameData.Count - 1)].Add((main.seed).ToString("F5"));
+        // Number of trials
+        PerFrameData[(PerFrameData.Count - 1)].Add((main.current_trial).ToString("F5"));
+        // Condition
+        PerFrameData[(PerFrameData.Count - 1)].Add((main.current_condition).ToString("F5"));
+        // State
+        PerFrameData[(PerFrameData.Count - 1)].Add((main.current_state).ToString("F5"));
+        PerFrameData[(PerFrameData.Count - 1)].Add((main.error_state).ToString("F5"));
+        // Reward
+        PerFrameData[(PerFrameData.Count - 1)].Add((ardu.reward_counter).ToString("F5"));
 
-        PerFrameData[(PerFrameData.Count - 1)].Add((forest.correct_trials).ToString());
-        PerFrameData[(PerFrameData.Count - 1)].Add((forest.trial).ToString());
-        PerFrameData[(PerFrameData.Count - 1)].Add((forest.phase).ToString());
-        PerFrameData[(PerFrameData.Count - 1)].Add((forest.row_close_active).ToString());
-        PerFrameData[(PerFrameData.Count - 1)].Add((forest.row_middle_active).ToString());
-        PerFrameData[(PerFrameData.Count - 1)].Add((forest.row_far_active).ToString());
-        PerFrameData[(PerFrameData.Count - 1)].Add((forest.correct_target_name));
-        PerFrameData[(PerFrameData.Count - 1)].Add((forest.interval).ToString("F7"));
+        // Task specific variables
+        PerFrameData[(PerFrameData.Count - 1)].Add((main.correct_trials).ToString());
+        PerFrameData[(PerFrameData.Count - 1)].Add((main.phase).ToString());
+        PerFrameData[(PerFrameData.Count - 1)].Add((main.row_close_active).ToString());
+        PerFrameData[(PerFrameData.Count - 1)].Add((main.row_middle_active).ToString());
+        PerFrameData[(PerFrameData.Count - 1)].Add((main.row_far_active).ToString());
+        PerFrameData[(PerFrameData.Count - 1)].Add((main.correct_target_name));
+        PerFrameData[(PerFrameData.Count - 1)].Add((main.interval).ToString("F7"));
 
+        // Moves
+        PerFrameData[(PerFrameData.Count - 1)].Add((ardu.ax1).ToString("F5"));
+        PerFrameData[(PerFrameData.Count - 1)].Add((ardu.ax2).ToString("F5"));
+        PerFrameData[(PerFrameData.Count - 1)].Add((player.transform.position.x).ToString("F5"));
+        PerFrameData[(PerFrameData.Count - 1)].Add((player.transform.position.z).ToString("F5"));
+        PerFrameData[(PerFrameData.Count - 1)].Add((player.transform.eulerAngles.y).ToString("F5"));
+        // Eyes
+        PerFrameData[(PerFrameData.Count - 1)].Add((PupilDataStream.PupilTimeStamps).ToString());
+        PerFrameData[(PerFrameData.Count - 1)].Add((PupilDataStream.CenterRightPupilPx[0]).ToString("F5"));
+        PerFrameData[(PerFrameData.Count - 1)].Add((PupilDataStream.CenterRightPupilPx[1]).ToString("F5"));
+        PerFrameData[(PerFrameData.Count - 1)].Add((PupilDataStream.CenterLeftPupilPx[0]).ToString("F5"));
+        PerFrameData[(PerFrameData.Count - 1)].Add((PupilDataStream.CenterLeftPupilPx[1]).ToString("F5"));
+        PerFrameData[(PerFrameData.Count - 1)].Add((PupilDataStream.DiameterLeft).ToString("F5"));
+        PerFrameData[(PerFrameData.Count - 1)].Add((PupilDataStream.DiameterRight).ToString("F5"));
+        PerFrameData[(PerFrameData.Count - 1)].Add((PupilDataStream.confidence_L).ToString("F5"));
+        PerFrameData[(PerFrameData.Count - 1)].Add((PupilDataStream.confidence_R).ToString("F5"));
+    }
+    #endregion
 
-        PerFrameData[(PerFrameData.Count - 1)].Add((controller.ax1).ToString("F7"));
-        PerFrameData[(PerFrameData.Count - 1)].Add((controller.ax2).ToString("F7"));
-        PerFrameData[(PerFrameData.Count - 1)].Add((player.transform.position.x).ToString("F7"));
-        PerFrameData[(PerFrameData.Count - 1)].Add((player.transform.position.z).ToString("F7"));
-        PerFrameData[(PerFrameData.Count - 1)].Add((player.transform.eulerAngles.y).ToString("F7"));
+    #region DEFINE SUPPLEMENT (OBJECTS) DATA
 
+    // Initiate List to store data
+    List<List<string>> SupplementData = new List<List<string>>();
 
-        PerFrameData[(PerFrameData.Count - 1)].Add((controller.reward_counter).ToString("F5"));
-
-        PerFrameData[(PerFrameData.Count - 1)].Add((pupilDataStream.Vector_L.x).ToString("F5"));
-        PerFrameData[(PerFrameData.Count - 1)].Add((pupilDataStream.Vector_L.y).ToString("F5"));
-        PerFrameData[(PerFrameData.Count - 1)].Add((pupilDataStream.Vector_L.z).ToString("F5"));
-
-        PerFrameData[(PerFrameData.Count - 1)].Add((pupilDataStream.Vector_R.x).ToString("F5"));
-        PerFrameData[(PerFrameData.Count - 1)].Add((pupilDataStream.Vector_R.y).ToString("F5"));
-        PerFrameData[(PerFrameData.Count - 1)].Add((pupilDataStream.Vector_R.z).ToString("F5"));
-
-        PerFrameData[(PerFrameData.Count - 1)].Add((pupilDataStream.Theta_L).ToString("F5"));
-        PerFrameData[(PerFrameData.Count - 1)].Add((pupilDataStream.Theta_R).ToString("F5"));
-
-        PerFrameData[(PerFrameData.Count - 1)].Add((pupilDataStream.Phi_L).ToString("F5"));
-        PerFrameData[(PerFrameData.Count - 1)].Add((pupilDataStream.Phi_R).ToString("F5"));
-
-
-        PerFrameData[(PerFrameData.Count - 1)].Add((pupilDataStream.DiameterLeft).ToString("F5"));
-        PerFrameData[(PerFrameData.Count - 1)].Add((pupilDataStream.DiameterRight).ToString("F5"));
-
-
-        PerFrameData[(PerFrameData.Count - 1)].Add((pupilDataStream.confidence_L).ToString("F5"));
-        PerFrameData[(PerFrameData.Count - 1)].Add((pupilDataStream.confidence_R).ToString("F5"));
+    public void addObject(string identifier, float x_pos, float z_pos,
+                            /* float y_pos, float x_scale, float y_scale, float z_scale,
+                            float x_rot, float y_rot, float z_rot, */
+                            float orientation, string type)
+    {
+        SupplementData.Add(new List<string>()); //Adds new sub List
+        SupplementData[(SupplementData.Count - 1)].Add(identifier);
+        SupplementData[(SupplementData.Count - 1)].Add((x_pos).ToString("F5"));
+        SupplementData[(SupplementData.Count - 1)].Add((z_pos).ToString("F5"));
+        /*
+        SupplementData[(SupplementData.Count - 1)].Add((y_pos).ToString("F5"));
+        SupplementData[(SupplementData.Count - 1)].Add((x_scale).ToString("F5"));
+        SupplementData[(SupplementData.Count - 1)].Add((y_scale).ToString("F5"));
+        SupplementData[(SupplementData.Count - 1)].Add((z_scale).ToString("F5"));
+        SupplementData[(SupplementData.Count - 1)].Add((x_rot).ToString("F5"));
+        SupplementData[(SupplementData.Count - 1)].Add((y_rot).ToString("F5"));
+        SupplementData[(SupplementData.Count - 1)].Add((z_rot).ToString("F5"));
+        */
+        SupplementData[(SupplementData.Count - 1)].Add((orientation).ToString("F5"));
+        SupplementData[(SupplementData.Count - 1)].Add(type);
+        SupplementData[(SupplementData.Count - 1)].Add((time).ToString());
+        SupplementData[(SupplementData.Count - 1)].Add("-1");
     }
 
 
-    public void addObject(string identifier, float x_pos, float z_pos, float orientation, string type)
-    {
-        //go.GetInstanceID() int to str
-        //long time = System.DateTimeOffset.Now.ToUnixTimeMilliseconds() - starttime;
-        OneTimeData.Add(new List<string>()); //Adds new sub List
-        OneTimeData[(OneTimeData.Count - 1)].Add(identifier); //.ToString()
-        OneTimeData[(OneTimeData.Count - 1)].Add((x_pos).ToString("F5"));
-        OneTimeData[(OneTimeData.Count - 1)].Add((z_pos).ToString("F5"));
-        OneTimeData[(OneTimeData.Count - 1)].Add((orientation).ToString("F5"));
-        OneTimeData[(OneTimeData.Count - 1)].Add(type);
-        OneTimeData[(OneTimeData.Count - 1)].Add((time).ToString());
-        OneTimeData[(OneTimeData.Count - 1)].Add("-1"); //time of object end is initialized -1
-    }
-
-
-    public void addObjectEnd(string identifier) //add the time of object end
+    public void addObjectEnd(string identifier)
     {
         //Debug.Log("Trying to remove " + identifier);
-        // Pi� veloce se si passa l'elenco di quelli da eliminare e poi si scorre sempre l'elenco e si elimina quando viene trovato.
+        // Someone broke the function. Please leave this function alone! All the main saving was broken. Gianni
+
         bool found = false;
-        for (int i = 0; i < OneTimeData.Count; i++)
+
+        for (int i = 0; i < SupplementData.Count; i++)
         {
-            if (OneTimeData[i][0] == identifier)
+            if (SupplementData[i][0] == identifier)
             {
-                //Debug.Log("Found Object at " + i);
-                OneTimeData[i][6] = (time).ToString();
+                SupplementData[i][(SupplementData.Count - 1)] = (time).ToString();
                 found = true;
             }
-
         }
 
         if (!found)
@@ -226,17 +206,30 @@ public class Saver : MonoBehaviour
 
     }
 
+    #endregion
+
     private void saveAllData(string delimiter)
     {
-        string Line = "";
         StringBuilder sb_PerFrame = new StringBuilder();
-        StringBuilder sb_OneTime = new StringBuilder();
+        StringBuilder sb_Supplement = new StringBuilder();
+        string Line = "";
 
         //Create Data writer
-        sb_PerFrame.AppendLine("Time; trial; trial_with_repeats; phase; close_active; middle_active; far_active; correct_target; interval; " +
-            "arduino_x; arduino_y; player_x; player_z; player_orientation; reward_counter" +
-            "eye_vec_lx; eye_vec_ly; eye_vec_lz; eye_vec_rx; eye_vec_ry; eye_vec_rz; eye_theta_l; eye_theta_r; eye_phi_l; eye_phi_r;" +
-            "eye_diameter_l; eye_diameter_r; eye_confidence_l; eye_confidence_r");
+        //sb_PerFrame.AppendLine("Time; trial; trial_with_repeats; phase; close_active; middle_active; far_active; correct_target; interval; " +
+        //    "arduino_x; arduino_y; player_x; player_z; player_orientation; reward_counter" +
+        //    "eye_vec_lx; eye_vec_ly; eye_vec_lz; eye_vec_rx; eye_vec_ry; eye_vec_rz; eye_theta_l; eye_theta_r; eye_phi_l; eye_phi_r;" +
+        //    "eye_diameter_l; eye_diameter_r; eye_confidence_l; eye_confidence_r");
+
+        #region Create Data writer
+        string general_vars = "Unity_timestamp; Frames; Seed; ";
+        string task_general_vars = "Trial; Condition; Current_state; Error_state; Reward_count; ";
+        // Change as desired (AddFrameData() method must be changed accordingly)
+        string task_specific_vars = "Correct trials; phase; close_active; middle_active; far_active; correct_target; interval; ";
+        string move_vars = "player_x_arduino; player_y_arduino; player_x; player_y; player_z_rot; ";
+        string eyes_vars = "pupil_timestamp; px_eye_right; py_eye_right; px_eye_left; py_eye_left; " +
+                                "eye_diameter_left; eye_diameter_right; eye_confidence_left; eye_confidence_right";
+
+        sb_PerFrame.AppendLine(general_vars + task_general_vars + task_specific_vars + move_vars + eyes_vars);
 
         for (int index = 0; index < PerFrameData.Count; index++)
         {
@@ -244,112 +237,60 @@ public class Saver : MonoBehaviour
 
             for (int counteri = 0; counteri < PerFrameData[index].Count; counteri++)
             {
-                Line += PerFrameData[index][counteri];   //Costruzione delle righe
+                Line += PerFrameData[index][counteri];
                 if (counteri != (PerFrameData[index].Count - 1)) { Line += delimiter; }
             }
             sb_PerFrame.AppendLine(Line);
         }
+        #endregion
 
-        /*
-        if (PerFrameData.Count > 100)
-        {
-            float fps = (PerFrameData.Count - 50) / ((int.Parse(PerFrameData[PerFrameData.Count - 20][0]) - int.Parse(PerFrameData[30][0])) / 1000);
-            Debug.Log("Saving Frequency: " + fps);
-        }
-        */
+        #region Create Supplement writer
+        sb_Supplement.AppendLine("Name; x; y; orientation; type; TimeEntry; TimeExit");
+        // ("Name; x; y; z; scale_x; scale_y; scale_z; rot_x; rot_y; rot_z; TimeEntry; TimeExit")
 
-
-
-        //Create Supplement writer
-        sb_OneTime.AppendLine("Name; x; y; orientation; info; TimeEntry; TimeExit"); //Id x y type 
-
-        for (int index = 0; index < OneTimeData.Count; index++)
+        for (int index = 0; index < SupplementData.Count; index++)
         {
             Line = "";
 
-            for (int counteri = 0; counteri < OneTimeData[index].Count; counteri++)
+            for (int counteri = 0; counteri < SupplementData[index].Count; counteri++)
             {
-                Line += OneTimeData[index][counteri];  //Costruzione delle righe
-                if (counteri != (OneTimeData[index].Count - 1)) { Line += delimiter; }
+                Line += SupplementData[index][counteri];  //Costruzione delle righe
+                if (counteri != (SupplementData[index].Count - 1)) { Line += delimiter; }
             }
-            sb_OneTime.AppendLine(Line);
+            sb_Supplement.AppendLine(Line);
         }
+        #endregion
 
-        if (Want2Save)
+        #region Add recording to the DB
+        if (RECORD)
         {
+            // Get time
             string new_Date = DateTime.Now.ToString("yyyy/MM/dd");
-            string new_Task = "Trial_structure";
-            string new_Param = forest.Trial_type.ToString() + ", " + forest.Target_setting.ToString();
 
-            new_Param = new_Param + "reverse_Xaxis=" + player.GetComponent<Movement>().reverse_Xaxis.ToString(); //add param to DB line
-            new_Param = new_Param + "reverse_Yaxis=" + player.GetComponent<Movement>().reverse_Yaxis.ToString();
+            // Get name of task
+            string[] s = Application.dataPath.Split('/');
+            string projectName = s[s.Length - 2];
+            string new_Task = projectName;
 
+            // Get parameters from public fields of main and movement
+            string jsonMainTask = JsonUtility.ToJson(main, true);
+            string jsonMovement = JsonUtility.ToJson(player.GetComponent<Movement>(), true);
+            string new_Param = "{ \"MainTask script params\": " + jsonMainTask
+                + ", \"Movement params\": " + jsonMovement + " }";
+
+            // Save entry to db
             int lastIDFromDB = DB.GetComponent<InteractWithDB>().GetLastIDfromDB();
-
             int new_ID = lastIDFromDB + 1;
-
             DB.GetComponent<InteractWithDB>().AddRecording(new_ID, new_Date, new_Task, new_Param);
 
-            string filePath_PerFrame = csvFilePath + "/" + DateTime.Now.ToString("yyyy_MM_dd") + "_ID" + new_ID.ToString() + "data.csv";
-            string filePath_OneTime = csvFilePath + "/" + DateTime.Now.ToString("yyyy_MM_dd") + "_ID" + new_ID.ToString() + "supplement.csv";
-            File.WriteAllText(filePath_PerFrame, sb_PerFrame.ToString());
-            File.WriteAllText(filePath_OneTime, sb_OneTime.ToString());
-            Debug.Log("Saved all CSV data");
+            // Save CSV
+            string path_to_data_PerFrame = Path.Combine(path_to_data, "DATI", (DateTime.Now.ToString("yyyy_MM_dd") + "_ID" + new_ID.ToString() + "data.csv"));
+            string path_to_data_Supplement = Path.Combine(path_to_data, "DATI", (DateTime.Now.ToString("yyyy_MM_dd") + "_ID" + new_ID.ToString() + "supplement.csv"));
+            File.WriteAllText(path_to_data_PerFrame, sb_PerFrame.ToString());
+            File.WriteAllText(path_to_data_Supplement, sb_Supplement.ToString());
+
+            Debug.Log($"Data successfully saved in {Path.Combine(path_to_data, "DATI")}");
         }
-    }
-
-
-    void StartRecording_all()
-    {
-        // Create a RecorderControllerSettings
-        var controllerSettings = ScriptableObject.CreateInstance<RecorderControllerSettings>();
-        if (controllerSettings == null)
-        {
-            Debug.LogError("Failed to create RecorderControllerSettings");
-            return;
-        }
-
-        // Add the MovieRecorderSettings related to left and right cameras to the RecorderController
-        controllerSettings.AddRecorderSettings(CreateRecorderSettings("MainCamera"));
-        controllerSettings.AddRecorderSettings(CreateRecorderSettings("LeftCamera"));
-        controllerSettings.AddRecorderSettings(CreateRecorderSettings("RightCamera"));
-        controllerSettings.SetRecordModeToManual();
-        controllerSettings.FrameRate = 60.0f;
-
-        // Create a RecorderController with the RecorderControllerSettings
-        recorderController = new RecorderController(controllerSettings);
-
-        // Prepare and start
-        recorderController.PrepareRecording();
-        recorderController.StartRecording();
-        Debug.Log("Recording started");
-
-        MovieRecorderSettings CreateRecorderSettings(string camTag)
-        {
-
-            string fileName = DateTime.Now.ToString("yyyy_MM_dd") + "_ID" + (lastIDFromDB + 1).ToString() + $"_{camTag}";
-
-            // Create a CameraInputSettings for the camera
-            CameraInputSettings camSettings = new CameraInputSettings
-            {
-                Source = ImageSource.TaggedCamera,
-                OutputWidth = MovieWidth,  // Set your desired output width
-                OutputHeight = MovieHeight, // Set your desired output height
-                CameraTag = camTag,
-            };
-
-            // Create a MovieRecorderSettings for the camera
-            MovieRecorderSettings movieRecorderSettings = ScriptableObject.CreateInstance<MovieRecorderSettings>();
-            movieRecorderSettings.Enabled = true;
-            movieRecorderSettings.OutputFile = movieFilePath + "/" + fileName;
-            movieRecorderSettings.ImageInputSettings = camSettings;
-            movieRecorderSettings.OutputFormat = MovieRecorderSettings.VideoRecorderOutputFormat.MP4;
-            movieRecorderSettings.VideoBitRateMode = VideoBitrateMode.High;
-
-            movieRecorderSettings.AudioInputSettings.PreserveAudio = false;
-
-            return movieRecorderSettings;
-        }
-
+        #endregion
     }
 }

@@ -1,5 +1,7 @@
 using System.Data;
+using System.IO;
 using UnityEngine;
+using UnityEditor;
 using IDbCommand = System.Data.IDbCommand;
 using IDbConnection = System.Data.IDbConnection;
 using Mono.Data.Sqlite;
@@ -7,40 +9,27 @@ using System;
 
 public class InteractWithDB: MonoBehaviour
 {
-    // -------------------------------------------------------------------------------------- mod marrti  29/11/23
-    //public string DB_filepath = "C:/Users/Francesco/Desktop/esperimentiVR.db";
-    public string DB_filepath = "C:/Users/admin/Desktop/Registrazioni_VR/esperimentiVR.db"; //--------------------
-    string GiannisPath = "C:/Users/g_brem02/sciebo/Promotion/2xMonkey/esperimentiVR.db";
     string conn;
     string sqlQuery;
     IDbConnection dbconn;
     IDbCommand dbcmd;
     IDataReader dbreader;
-    //string new_Date = DateTime.Now.ToString("yyyy/MM/dd");
-    //string new_Task = "";
-    //string new_Param = "";
-    //int lastID;
-    //int new_ID;
+    string path_to_data;
+    GameObject experiment;
 
-    string DBfilepath_applied;
     void Start()
     {
-        if (Application.systemLanguage == SystemLanguage.German)
-        {
-            Debug.Log("Gianni here");
-            DBfilepath_applied = GiannisPath;
-        } else
-        {
-            DBfilepath_applied = DB_filepath;
-        }
+        experiment = GameObject.Find("Experiment");
+        path_to_data = experiment.GetComponent<MainTask>().path_to_data;
+        path_to_data = Path.Combine(path_to_data, "esperimentiVR.db");
     }
 
     public int GetLastIDfromDB()
     {
         int lastID = -1; // Initialize lastID with a default value in case no records are found
 
-        Debug.Log("Connecting to DB " + $"DB_filepath={DBfilepath_applied} for reading last ID");
-        conn = "URI=file:" + DBfilepath_applied;
+        Debug.Log("Connecting to DB " + $"DB_filepath={path_to_data} for reading last ID");
+        conn = "URI=file:" + path_to_data;
 
         using (dbconn = new SqliteConnection(conn))
         {
@@ -71,8 +60,8 @@ public class InteractWithDB: MonoBehaviour
 
     public void AddRecording(int new_ID, string new_Date, string new_Task, string new_Param)
     {
-        Debug.Log("Connecting to DB " + $"DB_filepath={DBfilepath_applied} to add new recording");
-        conn = "URI=file:" + DBfilepath_applied;
+        Debug.Log("Connecting to DB " + $"DB_filepath={path_to_data} to add new recording");
+        conn = "URI=file:" + path_to_data;
 
         using (dbconn = new SqliteConnection(conn))
         {

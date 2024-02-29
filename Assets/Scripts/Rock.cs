@@ -15,12 +15,11 @@ public class Rock : MonoBehaviour
     {
         if (other.name == "Player")
         {
-            experiment.GetComponent<TriggerBox>().SendToTriggerBox(12);
             experiment.GetComponent<Saver>().addObject(transform.tag,
                                                     transform.position.x,
                                                     transform.position.z,
                                                     transform.eulerAngles.y, "TouchedARock");
-            experiment.GetComponent<Forest>().phase = 103;
+            experiment.GetComponent<MainTask>().phase = 103;
         }
     }
 }

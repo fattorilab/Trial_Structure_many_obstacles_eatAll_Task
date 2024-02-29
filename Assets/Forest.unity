@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.59517455, g: 0.6807535, b: 0.75270545, a: 1}
+  m_IndirectSpecularColor: {r: 0.59517413, g: 0.68075246, b: 0.7527039, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -204,7 +204,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae3538364a624754b9b16d801050a47e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DB_filepath: C:/Users/admin/Desktop/Registrazioni_VR/esperimentiVR.db
 --- !u!4 &25750090
 Transform:
   m_ObjectHideFlags: 0
@@ -951,8 +950,6 @@ GameObject:
   - component: {fileID: 1239289641}
   - component: {fileID: 1239289645}
   - component: {fileID: 1239289644}
-  - component: {fileID: 1239289643}
-  - component: {fileID: 1239289642}
   - component: {fileID: 1239289646}
   - component: {fileID: 1239289647}
   m_Layer: 0
@@ -977,32 +974,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1239289642
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1239289640}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 645992bb758fc10428eb5a004d500d45, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_refreshTime: 0.5
---- !u!114 &1239289643
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1239289640}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e5c4bb93eda35548a9365e796b47db5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  COM: 
 --- !u!114 &1239289644
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1016,17 +987,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   starttime: 0
+  frame_counter: 0
   RECORD: 0
-  MovieWidth: 1280
-  MovieHeight: 720
-  movieFilePath: C:\Users\admin\Desktop\VIDEO\
-  Want2Save: 0
-  csvFilePath: 
-  mainCam: {fileID: 1913868726606073928}
-  leftCam: {fileID: 1913868726121277115}
-  rightCam: {fileID: 1913868724617376013}
-  lastIDFromDB: 0
-  hit_info: None
+  path_to_data: 
   PupilData: {fileID: 1592972314}
 --- !u!114 &1239289645
 MonoBehaviour:
@@ -1040,7 +1003,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 23250581479892f43b4af8e1e4923187, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  nullpositionTime: 200
+  start_ms: 0
+  exp_has_started: 0
+  MEF: lisca
+  path_to_data: C:\Users\edoar\Desktop\Fattori_lab\test_data_folder
+  RECORD: 1
+  RECORD_EYES: 0
   seed: 1
+  reward_length: 500
+  minimumRewardTime: 200
+  minimumDistance: 2
+  current_condition: 0
+  current_state: 0
+  error_state: 0
   Trial_type: 0
   TargetsInObstacleTask: 4
   Target_setting: 1
@@ -1048,18 +1024,14 @@ MonoBehaviour:
   abortTrial: 0
   RESET_NOT_JUST_BLOCKED: 1
   AVOID_SAME_TARGET_TWICE: 1
-  reward_length: 150
   whitescreenseconds: 0.3
-  minimumRewardTime: 200
-  minimumDistance: 2
-  nullpositionTime: 200
-  Player: {fileID: 1913868725626146597}
-  RECORD_EYES: 1
   maximum_trial_time: 15
   RESET_IF_FULL_TURN: 1
   RESET_AT_TARGET_NOT_GIVEN: 1
-  Fruit_Abstract: {fileID: 7803970846313583056, guid: 69ab4cefa3c3a7347a697075b8b2e78e, type: 3}
-  trial: 0
+  camM: {fileID: 1913868726606073928}
+  camL: {fileID: 1913868726121277115}
+  camR: {fileID: 1913868724617376013}
+  current_trial: 0
   correct_trials: 0
   phase: 0
   interval: 0
@@ -1067,8 +1039,8 @@ MonoBehaviour:
   row_middle_active: 0
   row_far_active: 0
   correct_target_name: Unknown
-  start_ms: 0
-  exp_has_started: 0
+  Player: {fileID: 1913868725626146597}
+  Fruit_Abstract: {fileID: 7803970846313583056, guid: 69ab4cefa3c3a7347a697075b8b2e78e, type: 3}
   PupilDataManagment: {fileID: 1592972314}
 --- !u!114 &1239289646
 MonoBehaviour:
@@ -1706,8 +1678,9 @@ GameObject:
   - component: {fileID: 1913868724617376014}
   - component: {fileID: 1913868724617376013}
   - component: {fileID: 1913868724617376016}
+  - component: {fileID: 1913868724617376017}
   m_Layer: 0
-  m_Name: RightCam
+  m_Name: Right Camera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1773,6 +1746,22 @@ MonoBehaviour:
   m_BeforeTransparentBundles: []
   m_BeforeStackBundles: []
   m_AfterStackBundles: []
+--- !u!114 &1913868724617376017
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1913868724617376015}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a66fbd5ffe9b9d64da304996f1919f40, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _width: 1280
+  _height: 720
+  _preset: 0
+  _frameRate: 25
 --- !u!54 &1913868725626146584
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1916,8 +1905,9 @@ GameObject:
   - component: {fileID: 1913868726121276997}
   - component: {fileID: 1913868726121277115}
   - component: {fileID: 1913868726121277116}
+  - component: {fileID: 1913868726121277117}
   m_Layer: 0
-  m_Name: LeftCam
+  m_Name: Left Camera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2026,6 +2016,22 @@ MonoBehaviour:
   m_BeforeTransparentBundles: []
   m_BeforeStackBundles: []
   m_AfterStackBundles: []
+--- !u!114 &1913868726121277117
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1913868726121276998}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a66fbd5ffe9b9d64da304996f1919f40, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _width: 1280
+  _height: 720
+  _preset: 0
+  _frameRate: 25
 --- !u!20 &1913868726606073928
 Camera:
   m_ObjectHideFlags: 0
@@ -2089,6 +2095,7 @@ GameObject:
   - component: {fileID: 1913868726606073928}
   - component: {fileID: 1913868726606073929}
   - component: {fileID: 1913868726606073936}
+  - component: {fileID: 1913868726606073937}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -2171,6 +2178,22 @@ MonoBehaviour:
   m_BeforeTransparentBundles: []
   m_BeforeStackBundles: []
   m_AfterStackBundles: []
+--- !u!114 &1913868726606073937
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1913868726606073930}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a66fbd5ffe9b9d64da304996f1919f40, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _width: 1280
+  _height: 720
+  _preset: 0
+  _frameRate: 25
 --- !u!1 &8026010967362893542
 GameObject:
   m_ObjectHideFlags: 0
