@@ -3,6 +3,9 @@
 
 using UnityEngine;
 using System.Collections;
+// ADDED BY EDO TO SAVE RECORD TIME/FRAME
+using System.IO;
+using System;
 
 namespace FFmpegOut
 {
@@ -11,14 +14,14 @@ namespace FFmpegOut
     {
         #region Public properties
 
-        [SerializeField] int _width = 1920;
+        [SerializeField] int _width = 1280;
 
         public int width {
             get { return _width; }
             set { _width = value; }
         }
 
-        [SerializeField] int _height = 1080;
+        [SerializeField] int _height = 720;
 
         public int height {
             get { return _height; }
@@ -82,6 +85,13 @@ namespace FFmpegOut
 
         #endregion
 
+        #region ADDED BY EDO: RECORDING FRAMES AND TIMESTAMPS
+
+        private StreamWriter _streamWriter;
+        private bool _isStreamWriterInitialized = false;
+
+        #endregion
+
         #region MonoBehaviour implementation
 
         void OnValidate()
@@ -114,27 +124,62 @@ namespace FFmpegOut
                 Destroy(_blitter);
                 _blitter = null;
             }
-        }
 
-        IEnumerator Start()
-        {
-            // Sync with FFmpeg pipe thread at the end of every frame.
-            for (var eof = new WaitForEndOfFrame();;)
+            // ADDED BY EDO: close the streamwriter
+            if (_isStreamWriterInitialized)
             {
-                yield return eof;
-                _session?.CompletePushFrames();
+                _streamWriter.Close();
             }
         }
 
+        IEnumerator Start()
+            {
+                // Sync with FFmpeg pipe thread at the end of every frame.
+                for (var eof = new WaitForEndOfFrame();;)
+                {
+                    yield return eof;
+                    _session?.CompletePushFrames();
+                }
+            }
+
         void Update()
         {
-            var camera = GetComponent<Camera>();
-            
+            #region ADDED BY EDO: SAVE RECORDER FRAMES
+
             GameObject experiment = GameObject.Find("Experiment");
             int frame_num = experiment.GetComponent<MainTask>().frame_number;
+            int reward_count = experiment.GetComponent<Ardu>().reward_counter;
 
+            // Check if the StreamWriter is not initialized
+            if (!_isStreamWriterInitialized)
+            {
+                // Get the Experiment and DB GameObjects
+                GameObject DB = GameObject.Find("DB");
+
+                // Get path_to_data and lastIDFromDB from the other scripts
+                // Replace MainTask and InteractWithDB with your actual script classes
+                string path_to_data = experiment.GetComponent<MainTask>().path_to_data;
+                int lastIDFromDB = DB.GetComponent<InteractWithDB>().GetLastIDfromDB();
+
+                // Check if path_to_data and lastIDFromDB are not null or zero
+                if (!string.IsNullOrEmpty(path_to_data) && lastIDFromDB != 0)
+                {
+                    string path_to_data_RecorderFrames = Path.Combine(path_to_data, "DATI", (DateTime.Now.ToString("yyyy_MM_dd") + "_ID" + (lastIDFromDB + 1).ToString() + "recorderFrames.csv"));
+
+                    _streamWriter = new StreamWriter(path_to_data_RecorderFrames);
+                    _streamWriter.WriteLine("Timestamp,Frame,Reward_count");
+
+                    // Set the flag to true after initializing the StreamWriter
+                    _isStreamWriterInitialized = true;
+                }
+            }
+
+            #endregion
+
+            var camera = GetComponent<Camera>();
+            
             // Lazy initialization
-            if (_session == null && frame_num == 10) // frame_num ADDED BY EDO TO CONTROL START OF RECORDING 
+            if (_session == null) // && frame_num == 10) ADDED BY EDO TO CONTROL START OF RECORDING 
             {
                 // Give a newly created temporary render texture to the camera
                 // if it's set to render to a screen. Also create a blitter
@@ -160,11 +205,11 @@ namespace FFmpegOut
                 _frameDropCount = 0;
 
             }
-
+            
             var gap = Time.time - FrameTime;
             var delta = 1 / _frameRate;
 
-            if (frame_num > 10)
+            if (frame_num > 10) // ADDED BY EDO TO CONTROL START OF RECORDING 
             {
                 if (gap < 0)
                 {
@@ -199,10 +244,18 @@ namespace FFmpegOut
                     // Compensate the time delay.
                     _frameCount += Mathf.FloorToInt(gap * _frameRate);
                 }
+
+                // ADDED BY EDO: After pushing the frame to FFmpeg, write the details to the CSV file.
+                if (_isStreamWriterInitialized)
+                {
+                    _streamWriter.WriteLine($"{Time.time},{_frameCount},{reward_count}");
+                }
+
             }
 
         }
 
         #endregion
+    
     }
 }

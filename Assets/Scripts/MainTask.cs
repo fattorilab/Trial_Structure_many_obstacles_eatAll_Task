@@ -31,24 +31,6 @@ public class MainTask : MonoBehaviour
     public bool RECORD_EYES;
     [HideInInspector] public int seed;
 
-    #region Choose monkey and set path
-    void Awake()
-    {
-        if (MEF.ToLower() == "ciuffa") { path_to_data = Path.Combine(path_to_data, "MEF27"); }
-        else if (MEF.ToLower() == "lisca") { path_to_data = Path.Combine(path_to_data, "MEF28"); }
-        else
-        {
-            Debug.LogError("THE MEF DOES NOT EXIST");
-            EditorApplication.isPlaying = false;
-        }
-
-        if (RECORD)
-        {
-            Debug.Log("Recording videos and data. Files will be saved in " + path_to_data);
-        }
-    }
-    #endregion
-
     #endregion
 
     #region Reward variables
@@ -59,12 +41,34 @@ public class MainTask : MonoBehaviour
     [HideInInspector] public float minimumDistance; //to get juicy
     #endregion
 
+    #region GameObjects and components
+
+    [Header("Cameras")]
+    Camera camM;
+    Camera camL;
+    Camera camR;
+
+    GameObject experiment;
+    GameObject environment;
+    [HideInInspector] public GameObject Player;
+    GameObject[] targets;
+    GameObject correctTarget;
+    public GameObject Fruit_Abstract;
+    [HideInInspector] GameObject DB;
+    [HideInInspector] public GameObject PupilDataManagment;
+
+    #endregion
+
     #region Task general variables
+
     // [HideInInspector] public int current_trial = 0;
     [HideInInspector] public int current_condition = 0;
     [HideInInspector] public int current_state = 0;
     [HideInInspector] public int error_state = 0;
+
     #endregion
+
+    #region Task specific variables
 
     Vector3[] fixed_positions = { new Vector3(-2f, 0.5f, 9f), new Vector3(0f, 0.5f, 9.5f), new Vector3(2f, 0.5f, 9f),  //L_close, C_close, R_close
                                 new Vector3(-4f, 0.5f, 12f), new Vector3(0f, 0.5f, 13f),  new Vector3(4f, 0.5f, 12f),  //L_mid,   C_mid,   R_mid
@@ -104,16 +108,10 @@ public class MainTask : MonoBehaviour
     public bool RESET_IF_FULL_TURN;
     public bool RESET_AT_TARGET_NOT_GIVEN;
 
-    [Header("Cameras")]
-    Camera camM;
-    Camera camL;
-    Camera camR;
-    float targetAspect = 16f / 9f;
-
     [HideInInspector] public int current_trial = 0;
     [HideInInspector] public int correct_trials = 0;
     [HideInInspector] public int phase = 0;
-    [HideInInspector] public float interval = 0;
+    [HideInInspector] public float interval = 0; // To decide interval of green: comment it out in Reset() and make this visible in inspector.
     [HideInInspector] public bool row_close_active = false;
     [HideInInspector] public bool row_middle_active = false;
     [HideInInspector] public bool row_far_active = false;
@@ -128,29 +126,53 @@ public class MainTask : MonoBehaviour
     private int fruits_to_eat = 0;
     bool manyObstacleCondition = false;
 
-    GameObject experiment;
-    GameObject environment;
-    public GameObject Player;
-    GameObject[] targets;
-    GameObject correctTarget;
-    public GameObject Fruit_Abstract;
-    GameObject DB;
-    public GameObject PupilDataManagment;
+    #endregion
 
+    void Awake()
+    {
+        #region Choose monkey and set path
+
+        if (MEF.ToLower() == "ciuffa") { path_to_data = Path.Combine(path_to_data, "MEF27"); }
+        else if (MEF.ToLower() == "lisca") { path_to_data = Path.Combine(path_to_data, "MEF28"); }
+        else
+        {
+            Debug.LogError("THE MEF DOES NOT EXIST");
+            EditorApplication.isPlaying = false;
+        }
+
+        if (RECORD)
+        {
+            Debug.Log("Recording videos and data. Files will be saved in " + path_to_data);
+        }
+
+        #endregion
+
+        // Define start_time variable ??
+    }
 
     void Start()
     {
         Application.runInBackground = true;
         Random.InitState(seed);
 
-        PupilDataManagment.GetComponent<RequestController>().connectOnEnable = RECORD_EYES;
-        PupilDataManagment.SetActive(true);
-
+        // Database
         DB = GameObject.Find("DB");
         int lastIDFromDB = DB.GetComponent<InteractWithDB>().GetLastIDfromDB();
 
+        // Eyes
+        PupilDataManagment.GetComponent<RequestController>().connectOnEnable = RECORD_EYES;
+        PupilDataManagment.SetActive(true);
+
+        // Get GameObjects
         experiment = GameObject.Find("Experiment");
         environment = GameObject.Find("Environment");
+
+        // Init cameras
+        camM = GameObject.Find("Main Camera").GetComponent<Camera>();
+        camL = GameObject.Find("Left Camera").GetComponent<Camera>();
+        camR = GameObject.Find("Right Camera").GetComponent<Camera>();
+
+        #region ALL POSSIBLE SETTINGS
 
         /////////////////ALL//POSSIBLE//SETTINGS///////////////////////////////////////////////////////////////////////////////
         if (Trial_type == myEnum2.ManyObstacles || Trial_type == myEnum2.ManyObstacles_EatThemAll)
@@ -310,9 +332,7 @@ public class MainTask : MonoBehaviour
         GetComponent<Saver>().addObject("reset if full turn", System.Convert.ToSingle(RESET_IF_FULL_TURN), 0, 0, "Setting");
         GetComponent<Saver>().addObject("reset if uncued ball is reached", System.Convert.ToSingle(RESET_AT_TARGET_NOT_GIVEN), 0, 0, "Setting");
 
-        camM = GameObject.Find("Main Camera").GetComponent<Camera>();
-        camL = GameObject.Find("Left Camera").GetComponent<Camera>();
-        camR = GameObject.Find("Right Camera").GetComponent<Camera>();
+        #endregion
 
         reset();
     }
@@ -320,10 +340,6 @@ public class MainTask : MonoBehaviour
     
     void Update()
     {
-        if (camM) { AdaptAspectRatio(camM, targetAspect); }
-        if (camL) { AdaptAspectRatio(camL, targetAspect); }
-        if (camR) { AdaptAspectRatio(camR, targetAspect); }
-
         frame_number++;
         if (frame_number == 10) //Unity needs some frames to start, please keep this at 10, Gianni
         {
@@ -331,13 +347,15 @@ public class MainTask : MonoBehaviour
             camL.backgroundColor = Color.black;
             camR.backgroundColor = Color.black;
 
-            Debug.Log("START OF TRIAL");
+            Debug.Log("START OF SESSION");
 
             // TRIGGER START REGISTRAZIONE
             experiment.GetComponent<Ardu>().SendStartRecordingOE();
             start_ms = System.DateTimeOffset.Now.ToUnixTimeMilliseconds();
             exp_has_started = true;
         }
+
+        #region GAME BEHAVIOUR (TIMER AND PHASES)
 
         // Press Q to quit and abort the current trial
         //mod marrti---------------------------------
@@ -545,8 +563,9 @@ public class MainTask : MonoBehaviour
                 reset();
             }
         }
-        
-        
+
+        #endregion
+
     }
 
 
@@ -651,8 +670,6 @@ public class MainTask : MonoBehaviour
             Debug.Log("The correct target is: " + correct_target_name);
         }
         
-
-
     }
 
     private System.Random _random = new System.Random();
@@ -676,43 +693,6 @@ public class MainTask : MonoBehaviour
         {
             fruits_eaten = 0;
             phase = 99;
-        }
-    }
-
-    void AdaptAspectRatio(Camera cam, float targetAspect)
-    {
-        Debug.Log($"Adapting {cam} to 16:9");
-
-        // Determine the game window's current aspect ratio
-        float windowAspect = (float)Screen.width / (float)Screen.height;
-
-        // Current viewport height should be scaled by this amount
-        float scaleHeight = windowAspect / targetAspect;
-
-        // If scaled height is less than current height, add letterbox
-        if (scaleHeight < 1.0f)
-        {
-            Rect rect = cam.rect;
-
-            rect.width = 1.0f;
-            rect.height = scaleHeight;
-            rect.x = 0;
-            rect.y = (1.0f - scaleHeight) / 2.0f;
-
-            cam.rect = rect;
-        }
-        else // Add pillarbox
-        {
-            float scaleWidth = 1.0f / scaleHeight;
-
-            Rect rect = cam.rect;
-
-            rect.width = scaleWidth;
-            rect.height = 1.0f;
-            rect.x = (1.0f - scaleWidth) / 2.0f;
-            rect.y = 0;
-
-            cam.rect = rect;
         }
     }
 

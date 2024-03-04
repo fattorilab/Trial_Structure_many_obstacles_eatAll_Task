@@ -36,7 +36,7 @@ public class Saver : MonoBehaviour
     {
         System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
 
-        #region Choose Monkey and set path
+        #region Set path
         experiment = GameObject.Find("Experiment");
         RECORD = experiment.GetComponent<MainTask>().RECORD;
         path_to_data = experiment.GetComponent<MainTask>().path_to_data;
@@ -200,7 +200,7 @@ public class Saver : MonoBehaviour
         string Line = "";
 
         #region Create Data writer
-        string general_vars = "Unity_timestamp; Frames; Seed; ";
+        string general_vars = "Unity_timestamp; Frame; Seed; ";
         string task_general_vars = "Trial; Condition; Current_state; Error_state; Reward_count; ";
         // Change as desired (AddFrameData() method must be changed accordingly)
         string task_specific_vars = "Correct trials; phase; close_active; middle_active; far_active; correct_target; interval; ";
