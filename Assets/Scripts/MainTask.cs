@@ -27,7 +27,6 @@ public class MainTask : MonoBehaviour
     [Header("Saving info")]
     public string MEF;
     public string path_to_data;
-    public bool RECORD = false;
     public bool RECORD_EYES;
     [HideInInspector] public int seed;
 
@@ -140,14 +139,12 @@ public class MainTask : MonoBehaviour
             EditorApplication.isPlaying = false;
         }
 
-        if (RECORD)
-        {
-            Debug.Log("Recording videos and data. Files will be saved in " + path_to_data);
-        }
+        Debug.Log($"If desidered, files will be saved in {path_to_data}");
 
         #endregion
 
         // Define start_time variable ??
+
     }
 
     void Start()

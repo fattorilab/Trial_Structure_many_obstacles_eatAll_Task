@@ -13,7 +13,7 @@ namespace FFmpegOut
     {
         // ADDED BY EDO for output path
         private MainTask main;
-        public bool RECORD;
+        public static string path_to_video;
 
         #region Factory methods
 
@@ -23,18 +23,20 @@ namespace FFmpegOut
             FFmpegPreset preset
         )
         {
-            // ADDED BY EDO for output path
+            #region ADDED BY EDO: SET OUTPUT PATH
+
             GameObject experiment = GameObject.Find("Experiment");
             string path_to_data = experiment.GetComponent<MainTask>().path_to_data;
             GameObject DB = GameObject.Find("DB");
             int lastIDFromDB = DB.GetComponent<InteractWithDB>().GetLastIDfromDB();
             string fileName = DateTime.Now.ToString("yyyy_MM_dd") + "_ID" + (lastIDFromDB + 1).ToString() + $"_{name}";
             fileName += preset.GetSuffix(); // adds .mp4
-            var path = Path.Combine(path_to_data, "VIDEO", fileName);
+            path_to_video = Path.Combine(path_to_data, "VIDEO", fileName);
+            #endregion
 
             //name += System.DateTime.Now.ToString(" yyyy MMdd HHmmss");
             //var path = name.Replace(" ", "_") + preset.GetSuffix();
-            return CreateWithOutputPath(path, width, height, frameRate, preset);
+            return CreateWithOutputPath(path_to_video, width, height, frameRate, preset);
         }
 
         public static FFmpegSession CreateWithOutputPath(
@@ -113,10 +115,6 @@ namespace FFmpegOut
 
         FFmpegSession(string arguments)
         {
-            // ADDED BY EDO to control recording
-            GameObject experiment = GameObject.Find("Experiment");
-            bool RECORD = experiment.GetComponent<MainTask>().RECORD;
-
             if (!FFmpegPipe.IsAvailable)
                 Debug.LogWarning(
                     "Failed to initialize an FFmpeg session due to missing " +
@@ -128,9 +126,6 @@ namespace FFmpegOut
                     "async GPU readback support. Please try changing " +
                     "graphics API to readback-enabled one."
                 );
-            // ADDED BY EDO to control recording
-            else if (!RECORD)
-                Debug.LogWarning("YOU ARE NOT RECORDING");
             else
                 _pipe = new FFmpegPipe(arguments);
         }

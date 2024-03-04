@@ -1004,11 +1004,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1239289640}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ad18f10cf2d33314d94a6fcd3093abeb, type: 3}
+  m_Script: {fileID: 11500000, guid: 52bfa5d8551ca0d448f83f8c120fbe4d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   starttime: 0
-  RECORD: 0
   path_to_data: 
   PupilData: {fileID: 1592972314}
 --- !u!114 &1239289645
@@ -1029,7 +1028,6 @@ MonoBehaviour:
   exp_has_started: 0
   MEF: lisca
   path_to_data: C:\Users\edoar\Desktop\Fattori_lab\test_data_folder
-  RECORD: 0
   RECORD_EYES: 0
   seed: 1
   reward_length: 500
@@ -2260,13 +2258,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 1913868726606073930}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a66fbd5ffe9b9d64da304996f1919f40, type: 3}
+  m_Script: {fileID: 11500000, guid: 980d34c50a6ca594e9711aa1902f5509, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _width: 1280
   _height: 720
   _preset: 0
   _frameRate: 25
+  path_to_data_RecorderFrames: 
+  path_to_video: 
 --- !u!1 &8026010967362893542
 GameObject:
   m_ObjectHideFlags: 0

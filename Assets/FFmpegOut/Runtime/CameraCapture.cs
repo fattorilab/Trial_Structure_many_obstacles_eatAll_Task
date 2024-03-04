@@ -87,8 +87,13 @@ namespace FFmpegOut
 
         #region ADDED BY EDO: RECORDING FRAMES AND TIMESTAMPS
 
+        GameObject experiment;
         private StreamWriter _streamWriter;
         private bool _isStreamWriterInitialized = false;
+        public string path_to_data_RecorderFrames;
+
+        // Movie path
+        public string path_to_video;
 
         #endregion
 
@@ -104,6 +109,9 @@ namespace FFmpegOut
         {
             if (_session != null)
             {
+                // ADDED BY EDO: Grab video output path
+                path_to_video = FFmpegSession.path_to_video;
+
                 // Close and dispose the FFmpeg session.
                 _session.Close();
                 _session.Dispose();
@@ -125,11 +133,28 @@ namespace FFmpegOut
                 _blitter = null;
             }
 
-            // ADDED BY EDO: close the streamwriter
+            #region ADDED BY EDO: Save/Delete depending on user choice
+
+            // VIDEO
+
+            if (!Saver.wants2save)
+            {
+                File.Delete(path_to_video);
+            }
+
+            // CSV of recorder frames
             if (_isStreamWriterInitialized)
             {
                 _streamWriter.Close();
+
+                // Save or delete csv file depending on user prompt
+                if (!Saver.wants2save)
+                {
+                    File.Delete(path_to_data_RecorderFrames);
+                }
             }
+
+            #endregion
         }
 
         IEnumerator Start()
@@ -164,8 +189,7 @@ namespace FFmpegOut
                 // Check if path_to_data and lastIDFromDB are not null or zero
                 if (!string.IsNullOrEmpty(path_to_data) && lastIDFromDB != 0)
                 {
-                    string path_to_data_RecorderFrames = Path.Combine(path_to_data, "DATI", (DateTime.Now.ToString("yyyy_MM_dd") + "_ID" + (lastIDFromDB + 1).ToString() + "recorderFrames.csv"));
-
+                    path_to_data_RecorderFrames = Path.Combine(path_to_data, "DATI", (DateTime.Now.ToString("yyyy_MM_dd") + "_ID" + (lastIDFromDB + 1).ToString() + "recorderFrames.csv"));
                     _streamWriter = new StreamWriter(path_to_data_RecorderFrames);
                     _streamWriter.WriteLine("Timestamp,Frame,Reward_count");
 
@@ -256,6 +280,5 @@ namespace FFmpegOut
         }
 
         #endregion
-    
     }
 }

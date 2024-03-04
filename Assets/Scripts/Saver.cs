@@ -18,7 +18,7 @@ public class Saver : MonoBehaviour
     #endregion
 
     #region Saving variables
-    [HideInInspector] public bool RECORD;
+    [HideInInspector] public static bool wants2save;
     [HideInInspector] public string path_to_data;
     #endregion
 
@@ -28,7 +28,7 @@ public class Saver : MonoBehaviour
     GameObject DB;
     GameObject player;
     GameObject experiment;
-    [HideInInspector] public GameObject PupilData;
+    public GameObject PupilData;
     PupilDataStream PupilDataStream;
     #endregion
 
@@ -38,7 +38,6 @@ public class Saver : MonoBehaviour
 
         #region Set path
         experiment = GameObject.Find("Experiment");
-        RECORD = experiment.GetComponent<MainTask>().RECORD;
         path_to_data = experiment.GetComponent<MainTask>().path_to_data;
         #endregion
 
@@ -48,7 +47,7 @@ public class Saver : MonoBehaviour
         PupilDataStream = PupilData.GetComponent<PupilDataStream>();
         DB = GameObject.Find("DB");
         player = GameObject.Find("Player");
-        #endregion
+        #endregion        
 
         // Manage time
         starttime = System.DateTimeOffset.Now.ToUnixTimeMilliseconds() + 1000000;
@@ -77,8 +76,19 @@ public class Saver : MonoBehaviour
 
     private void OnApplicationQuit()
     {
-        saveAllData(";");
+        // Ask user if she wants to save
+        wants2save = WantsToSave();
+        if (wants2save)
+        {
+            saveAllData(";");
+        }
         Application.Quit();
+    }
+
+    // Ask user if she wants to save
+    static bool WantsToSave()
+    {
+        return EditorUtility.DisplayDialog("SAVE DATA", "Do you want to save movies and csv?", "Yes", "No");
     }
 
     #region DEFINE FRAME DATA
@@ -241,35 +251,34 @@ public class Saver : MonoBehaviour
         #endregion
 
         #region Add recording to the DB
-        if (RECORD)
-        {
-            // Get time
-            string new_Date = DateTime.Now.ToString("yyyy/MM/dd");
+ 
+        // Get time
+        string new_Date = DateTime.Now.ToString("yyyy/MM/dd");
 
-            // Get name of task
-            string[] s = Application.dataPath.Split('/');
-            string projectName = s[s.Length - 2];
-            string new_Task = projectName;
+        // Get name of task
+        string[] s = Application.dataPath.Split('/');
+        string projectName = s[s.Length - 2];
+        string new_Task = projectName;
 
-            // Get parameters from public fields of main and movement
-            string jsonMainTask = JsonUtility.ToJson(main, true);
-            string jsonMovement = JsonUtility.ToJson(player.GetComponent<Movement>(), true);
-            string new_Param = "{ \"MainTask script params\": " + jsonMainTask
-                + ", \"Movement params\": " + jsonMovement + " }";
+        // Get parameters from public fields of main and movement
+        string jsonMainTask = JsonUtility.ToJson(main, true);
+        string jsonMovement = JsonUtility.ToJson(player.GetComponent<Movement>(), true);
+        string new_Param = "{ \"MainTask script params\": " + jsonMainTask
+            + ", \"Movement params\": " + jsonMovement + " }";
 
-            // Save entry to db
-            int lastIDFromDB = DB.GetComponent<InteractWithDB>().GetLastIDfromDB();
-            int new_ID = lastIDFromDB + 1;
-            DB.GetComponent<InteractWithDB>().AddRecording(new_ID, new_Date, new_Task, new_Param);
+        // Save entry to db
+        int lastIDFromDB = DB.GetComponent<InteractWithDB>().GetLastIDfromDB();
+        int new_ID = lastIDFromDB + 1;
+        DB.GetComponent<InteractWithDB>().AddRecording(new_ID, new_Date, new_Task, new_Param);
 
-            // Save CSV
-            string path_to_data_PerFrame = Path.Combine(path_to_data, "DATI", (DateTime.Now.ToString("yyyy_MM_dd") + "_ID" + new_ID.ToString() + "data.csv"));
-            string path_to_data_Supplement = Path.Combine(path_to_data, "DATI", (DateTime.Now.ToString("yyyy_MM_dd") + "_ID" + new_ID.ToString() + "supplement.csv"));
-            File.WriteAllText(path_to_data_PerFrame, sb_PerFrame.ToString());
-            File.WriteAllText(path_to_data_Supplement, sb_Supplement.ToString());
+        // Save CSV
+        string path_to_data_PerFrame = Path.Combine(path_to_data, "DATI", (DateTime.Now.ToString("yyyy_MM_dd") + "_ID" + new_ID.ToString() + "data.csv"));
+        string path_to_data_Supplement = Path.Combine(path_to_data, "DATI", (DateTime.Now.ToString("yyyy_MM_dd") + "_ID" + new_ID.ToString() + "supplement.csv"));
+        File.WriteAllText(path_to_data_PerFrame, sb_PerFrame.ToString());
+        File.WriteAllText(path_to_data_Supplement, sb_Supplement.ToString());
 
-            Debug.Log($"Data successfully saved in {Path.Combine(path_to_data, "DATI")}");
-        }
+        Debug.Log($"Data successfully saved in {Path.Combine(path_to_data, "DATI")}");
+ 
         #endregion
     }
 }
