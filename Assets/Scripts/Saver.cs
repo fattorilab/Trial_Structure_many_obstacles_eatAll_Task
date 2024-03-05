@@ -22,6 +22,13 @@ public class Saver : MonoBehaviour
     [HideInInspector] public string path_to_data;
     #endregion
 
+    #region Task general variables
+    [HideInInspector] int current_trial;
+    [HideInInspector] int current_condition;
+    [HideInInspector] int current_state;
+    [HideInInspector] int error_state;
+    #endregion
+
     #region GameObjects and components
     MainTask main; // Experiment main script
     Ardu ardu;
@@ -47,10 +54,19 @@ public class Saver : MonoBehaviour
         PupilDataStream = PupilData.GetComponent<PupilDataStream>();
         DB = GameObject.Find("DB");
         player = GameObject.Find("Player");
-        #endregion        
+        #endregion
 
-        // Manage time
+        #region Get Task variables
+        current_trial = main.current_trial;
+        current_condition = main.current_condition;
+        current_state = main.current_state;
+        error_state = main.error_state;
+        #endregion
+
+        // Manage time: ridiculously low starttime to highlight initial 10 frames
         starttime = System.DateTimeOffset.Now.ToUnixTimeMilliseconds() + 1000000;
+
+        // Seed
         addObject("Seed", main.seed, main.seed, main.seed, "Seed");
     }
 
@@ -63,6 +79,7 @@ public class Saver : MonoBehaviour
         {
             if (main.exp_has_started)
             {
+                // Sync saver start-time with main start-time
                 starttime = main.start_ms;
                 got_start = true;
             }
@@ -103,20 +120,22 @@ public class Saver : MonoBehaviour
 
         // PerFrameData[(PerFrameData.Count - 1)].Add((time).ToString());
 
-        // Frames and time
+        // Manage the 10-frames initialization and save time
         long milliseconds = System.DateTimeOffset.Now.ToUnixTimeMilliseconds();
-        if (starttime == 0) { starttime = milliseconds; }
+
+        // PerFrameData[(PerFrameData.Count - 1)].Add((milliseconds - starttime).ToString());
         PerFrameData[(PerFrameData.Count - 1)].Add((milliseconds - starttime).ToString());
+        // Frame count
         PerFrameData[(PerFrameData.Count - 1)].Add((main.frame_number).ToString());
         // Seed
         PerFrameData[(PerFrameData.Count - 1)].Add((main.seed).ToString("F5"));
         // Number of trials
-        PerFrameData[(PerFrameData.Count - 1)].Add((main.current_trial).ToString("F5"));
+        PerFrameData[(PerFrameData.Count - 1)].Add((current_trial).ToString("F5"));
         // Condition
-        PerFrameData[(PerFrameData.Count - 1)].Add((main.current_condition).ToString("F5"));
+        PerFrameData[(PerFrameData.Count - 1)].Add((current_condition).ToString("F5"));
         // State
-        PerFrameData[(PerFrameData.Count - 1)].Add((main.current_state).ToString("F5"));
-        PerFrameData[(PerFrameData.Count - 1)].Add((main.error_state).ToString("F5"));
+        PerFrameData[(PerFrameData.Count - 1)].Add((current_state).ToString("F5"));
+        PerFrameData[(PerFrameData.Count - 1)].Add((error_state).ToString("F5"));
         // Reward
         PerFrameData[(PerFrameData.Count - 1)].Add((ardu.reward_counter).ToString("F5"));
 
@@ -267,9 +286,10 @@ public class Saver : MonoBehaviour
             + ", \"Movement params\": " + jsonMovement + " }";
 
         // Save entry to db
-        int lastIDFromDB = DB.GetComponent<InteractWithDB>().GetLastIDfromDB();
+        string path_to_DB = Path.Combine(path_to_data, "esperimentiVR.db");
+        int lastIDFromDB = main.lastIDFromDB;
         int new_ID = lastIDFromDB + 1;
-        DB.GetComponent<InteractWithDB>().AddRecording(new_ID, new_Date, new_Task, new_Param);
+        DB.GetComponent<InteractWithDB>().AddRecording(path_to_DB, new_ID, new_Date, new_Task, new_Param);
 
         // Save CSV
         string path_to_data_PerFrame = Path.Combine(path_to_data, "DATI", (DateTime.Now.ToString("yyyy_MM_dd") + "_ID" + new_ID.ToString() + "data.csv"));

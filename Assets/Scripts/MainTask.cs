@@ -28,6 +28,7 @@ public class MainTask : MonoBehaviour
     public string MEF;
     public string path_to_data;
     public bool RECORD_EYES;
+    [HideInInspector] public int lastIDFromDB;
     [HideInInspector] public int seed;
 
     #endregion
@@ -135,26 +136,41 @@ public class MainTask : MonoBehaviour
         else if (MEF.ToLower() == "lisca") { path_to_data = Path.Combine(path_to_data, "MEF28"); }
         else
         {
-            Debug.LogError("THE MEF DOES NOT EXIST");
-            EditorApplication.isPlaying = false;
+            bool ans = EditorUtility.DisplayDialog("Wrong MEF name", "Unable to find the monkey" + MEF, //don't know how to put a simple popup here (the choice is irrelevant)
+                            "Close and check MEF in MainTask");
+            QuitGame();
         }
 
         Debug.Log($"If desidered, files will be saved in {path_to_data}");
 
         #endregion
 
-        // Define start_time variable ??
+        #region Connect to DB and get last ID
+
+        try
+        {
+            DB = GameObject.Find("DB");
+            string path_to_DB = Path.Combine(path_to_data, "esperimentiVR.db");
+            lastIDFromDB = DB.GetComponent<InteractWithDB>().GetLastIDfromDB(path_to_DB);
+        }
+        catch
+        {
+            bool ans = EditorUtility.DisplayDialog("Cannot interact with DB", "It is not possible to read last ID from database. You may not to be able to save data",
+                            "Close and check DB", "Proceed anyway");
+            if (ans) { QuitGame(); }
+        }
+
+        #endregion
 
     }
 
     void Start()
     {
+
         Application.runInBackground = true;
         Random.InitState(seed);
 
-        // Database
-        DB = GameObject.Find("DB");
-        int lastIDFromDB = DB.GetComponent<InteractWithDB>().GetLastIDfromDB();
+        #region Get GameObjects and components
 
         // Eyes
         PupilDataManagment.GetComponent<RequestController>().connectOnEnable = RECORD_EYES;
@@ -168,6 +184,8 @@ public class MainTask : MonoBehaviour
         camM = GameObject.Find("Main Camera").GetComponent<Camera>();
         camL = GameObject.Find("Left Camera").GetComponent<Camera>();
         camR = GameObject.Find("Right Camera").GetComponent<Camera>();
+
+        #endregion
 
         #region ALL POSSIBLE SETTINGS
 
@@ -344,12 +362,11 @@ public class MainTask : MonoBehaviour
             camL.backgroundColor = Color.black;
             camR.backgroundColor = Color.black;
 
-            Debug.Log("START OF SESSION");
-
-            // TRIGGER START REGISTRAZIONE
+            // START
             experiment.GetComponent<Ardu>().SendStartRecordingOE();
             start_ms = System.DateTimeOffset.Now.ToUnixTimeMilliseconds();
             exp_has_started = true;
+            Debug.Log("START OF SESSION");
         }
 
         #region GAME BEHAVIOUR (TIMER AND PHASES)
@@ -569,7 +586,7 @@ public class MainTask : MonoBehaviour
     void OnApplicationQuit() // se l'app si interrompe (es. pause dell'editor) senza  che venga premuto 'esc'
     {
         experiment.GetComponent<Ardu>().SendStopRecordingOE();
-        Debug.Log("END");
+        Debug.Log("END OF SESSION");
     }
 
     void reset()
@@ -691,6 +708,14 @@ public class MainTask : MonoBehaviour
             fruits_eaten = 0;
             phase = 99;
         }
+    }
+
+    public void QuitGame()
+    {
+        #if UNITY_EDITOR
+                UnityEditor.EditorApplication.isPlaying = false;
+        #endif
+                Application.Quit();
     }
 
 }

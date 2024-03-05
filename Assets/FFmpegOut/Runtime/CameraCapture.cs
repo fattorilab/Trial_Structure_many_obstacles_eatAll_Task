@@ -173,19 +173,21 @@ namespace FFmpegOut
 
             GameObject experiment = GameObject.Find("Experiment");
             int frame_num = experiment.GetComponent<MainTask>().frame_number;
+            long main_start_time = experiment.GetComponent<MainTask>().start_ms;
             int reward_count = experiment.GetComponent<Ardu>().reward_counter;
 
             // Check if the StreamWriter is not initialized
             if (!_isStreamWriterInitialized)
             {
-                // Get the Experiment and DB GameObjects
-                GameObject DB = GameObject.Find("DB");
+                //// Get the Experiment and DB GameObjects
+                //GameObject DB = GameObject.Find("DB");
 
-                // Get path_to_data and lastIDFromDB from the other scripts
-                // Replace MainTask and InteractWithDB with your actual script classes
+                //// Get path_to_data and lastIDFromDB from the other scripts
+                //// Replace MainTask and InteractWithDB with your actual script classes
                 string path_to_data = experiment.GetComponent<MainTask>().path_to_data;
-                int lastIDFromDB = DB.GetComponent<InteractWithDB>().GetLastIDfromDB();
+                //int lastIDFromDB = DB.GetComponent<InteractWithDB>().GetLastIDfromDB();
 
+                int lastIDFromDB = experiment.GetComponent<MainTask>().lastIDFromDB;
                 // Check if path_to_data and lastIDFromDB are not null or zero
                 if (!string.IsNullOrEmpty(path_to_data) && lastIDFromDB != 0)
                 {
@@ -272,7 +274,8 @@ namespace FFmpegOut
                 // ADDED BY EDO: After pushing the frame to FFmpeg, write the details to the CSV file.
                 if (_isStreamWriterInitialized)
                 {
-                    _streamWriter.WriteLine($"{Time.time},{_frameCount},{reward_count}");
+                    long rec_time = System.DateTimeOffset.Now.ToUnixTimeMilliseconds();
+                    _streamWriter.WriteLine($"{(rec_time - main_start_time)},{_frameCount},{reward_count}");
                 }
 
             }

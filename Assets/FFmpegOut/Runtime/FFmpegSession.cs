@@ -27,8 +27,9 @@ namespace FFmpegOut
 
             GameObject experiment = GameObject.Find("Experiment");
             string path_to_data = experiment.GetComponent<MainTask>().path_to_data;
-            GameObject DB = GameObject.Find("DB");
-            int lastIDFromDB = DB.GetComponent<InteractWithDB>().GetLastIDfromDB();
+            //GameObject DB = GameObject.Find("DB");
+            //int lastIDFromDB = DB.GetComponent<InteractWithDB>().GetLastIDfromDB();
+            int lastIDFromDB = experiment.GetComponent<MainTask>().lastIDFromDB;
             string fileName = DateTime.Now.ToString("yyyy_MM_dd") + "_ID" + (lastIDFromDB + 1).ToString() + $"_{name}";
             fileName += preset.GetSuffix(); // adds .mp4
             path_to_video = Path.Combine(path_to_data, "VIDEO", fileName);
