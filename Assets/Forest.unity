@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.59517413, g: 0.68075246, b: 0.7527039, a: 1}
+  m_IndirectSpecularColor: {r: 0.59517455, g: 0.6807535, b: 0.75270545, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -972,7 +972,6 @@ GameObject:
   - component: {fileID: 1239289644}
   - component: {fileID: 1239289646}
   - component: {fileID: 1239289647}
-  - component: {fileID: 1239289648}
   m_Layer: 0
   m_Name: Experiment
   m_TagString: Untagged
@@ -1027,7 +1026,7 @@ MonoBehaviour:
   frame_number: 0
   exp_has_started: 0
   MEF: ciuffa
-  path_to_data: C:\Users\edoar\Desktop\Fattori_lab\test_data_folder
+  path_to_data: C:\Users\admin\Desktop\Registrazioni_VR_copia
   RECORD_EYES: 0
   lastIDFromDB: 0
   seed: 1
@@ -1090,20 +1089,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   filename: custom_positions_2palle
   balls_from_csv: []
---- !u!114 &1239289648
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1239289640}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e55bddfe16e69224c8c4b4eb165695d4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _frameRate: 60
-  _offlineMode: 1
 --- !u!1 &1271873898
 GameObject:
   m_ObjectHideFlags: 0
@@ -1737,9 +1722,10 @@ GameObject:
   - component: {fileID: 1913868724617376014}
   - component: {fileID: 1913868724617376013}
   - component: {fileID: 1913868724617376016}
+  - component: {fileID: 1913868724617376017}
   m_Layer: 0
   m_Name: Right Camera
-  m_TagString: Untagged
+  m_TagString: Right_Cam
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1804,6 +1790,24 @@ MonoBehaviour:
   m_BeforeTransparentBundles: []
   m_BeforeStackBundles: []
   m_AfterStackBundles: []
+--- !u!114 &1913868724617376017
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1913868724617376015}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 980d34c50a6ca594e9711aa1902f5509, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _width: 960
+  _height: 540
+  _preset: 0
+  _frameRate: 30
+  path_to_data_RecorderFrames: 
+  path_to_video: 
 --- !u!54 &1913868725626146584
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1974,9 +1978,10 @@ GameObject:
   - component: {fileID: 1913868726121276997}
   - component: {fileID: 1913868726121277115}
   - component: {fileID: 1913868726121277116}
+  - component: {fileID: 1913868726121277117}
   m_Layer: 0
   m_Name: Left Camera
-  m_TagString: Untagged
+  m_TagString: Left_Cam
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2092,6 +2097,24 @@ MonoBehaviour:
   m_BeforeTransparentBundles: []
   m_BeforeStackBundles: []
   m_AfterStackBundles: []
+--- !u!114 &1913868726121277117
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1913868726121276998}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 980d34c50a6ca594e9711aa1902f5509, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _width: 960
+  _height: 540
+  _preset: 0
+  _frameRate: 30
+  path_to_data_RecorderFrames: 
+  path_to_video: 
 --- !u!20 &1913868726606073928
 Camera:
   m_ObjectHideFlags: 0
@@ -2262,10 +2285,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 980d34c50a6ca594e9711aa1902f5509, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _width: 1280
-  _height: 720
+  _width: 960
+  _height: 540
   _preset: 0
-  _frameRate: 25
+  _frameRate: 30
   path_to_data_RecorderFrames: 
   path_to_video: 
 --- !u!1 &8026010967362893542

@@ -169,6 +169,8 @@ namespace FFmpegOut
 
         void Update()
         {
+            var camera = GetComponent<Camera>();
+
             #region ADDED BY EDO: SAVE RECORDER FRAMES
 
             GameObject experiment = GameObject.Find("Experiment");
@@ -191,7 +193,8 @@ namespace FFmpegOut
                 // Check if path_to_data and lastIDFromDB are not null or zero
                 if (!string.IsNullOrEmpty(path_to_data) && lastIDFromDB != 0)
                 {
-                    path_to_data_RecorderFrames = Path.Combine(path_to_data, "DATI", (DateTime.Now.ToString("yyyy_MM_dd") + "_ID" + (lastIDFromDB + 1).ToString() + "recorderFrames.csv"));
+                    path_to_data_RecorderFrames = Path.Combine(path_to_data, "DATI", (DateTime.Now.ToString("yyyy_MM_dd") 
+                        + "_ID" + (lastIDFromDB + 1).ToString() + $"_{camera.tag}" + "_recorderFrames.csv"));
                     _streamWriter = new StreamWriter(path_to_data_RecorderFrames);
                     _streamWriter.WriteLine("Timestamp,Frame,Reward_count");
 
@@ -201,8 +204,6 @@ namespace FFmpegOut
             }
 
             #endregion
-
-            var camera = GetComponent<Camera>();
             
             // Lazy initialization
             if (_session == null) // && frame_num == 10) ADDED BY EDO TO CONTROL START OF RECORDING 
