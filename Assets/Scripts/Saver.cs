@@ -9,6 +9,13 @@ using UnityEditor;
 using System;
 using PupilLabs;
 
+/* WHAT TO KNOW FOR THIS SAVER TO WORK
+ * - The main script/component of the experiment needs to be named MainTask.
+ * - Define in MainTask the same public variables as in region Task general variables.
+ * - Here, modify regions DEFINE FRAME DATA and Create Data Writer (method saveAllData) 
+ *      to include variables specific to your task (see task_specific_vars)
+ */
+
 public class Saver : MonoBehaviour
 {
     #region Time variables
@@ -22,6 +29,8 @@ public class Saver : MonoBehaviour
     [HideInInspector] public static bool wants2saveData;
     [HideInInspector] public static bool wants2saveVideos;
     [HideInInspector] public string path_to_data;
+    [HideInInspector] public string path_to_MEF;
+    [HideInInspector] public int lastIDFromDB;
     #endregion
 
     #region Task general variables
@@ -41,14 +50,47 @@ public class Saver : MonoBehaviour
     PupilDataStream PupilDataStream;
     #endregion
 
+    void Awake()
+    {
+        #region Choose monkey and set path
+
+        string MEF = GetComponent<MainTask>().MEF;
+        path_to_data = GetComponent<MainTask>().path_to_data;
+        if (MEF.ToLower() == "ciuffa") { path_to_MEF = Path.Combine(path_to_data, "MEF27"); }
+        else if (MEF.ToLower() == "lisca") { path_to_MEF = Path.Combine(path_to_data, "MEF28"); }
+        else
+        {
+            bool ans = EditorUtility.DisplayDialog("Wrong MEF name", "Unable to find the monkey" + MEF, //don't know how to put a simple popup here (the choice is irrelevant)
+                            "Close and check MEF in MainTask");
+            QuitGame();
+        }
+
+        Debug.Log($"If desidered, files will be saved in {path_to_MEF}");
+
+        #endregion
+
+        #region Connect to DB and get last ID
+
+        try
+        {
+            DB = GameObject.Find("DB");
+            string path_to_DB = Path.Combine(path_to_MEF, "esperimentiVR.db");
+            lastIDFromDB = DB.GetComponent<InteractWithDB>().GetLastIDfromDB(path_to_DB);
+        }
+        catch
+        {
+            bool ans = EditorUtility.DisplayDialog("Cannot interact with DB", "It is not possible to read last ID from database. You may not to be able to save data",
+                            "Close and check DB", "Proceed anyway");
+            if (ans) { QuitGame(); }
+        }
+
+        #endregion
+
+    }
+
     void Start()
     {
         System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
-
-        #region Set path
-        experiment = GameObject.Find("Experiment");
-        path_to_data = experiment.GetComponent<MainTask>().path_to_data;
-        #endregion
 
         #region Get GameObjects and Components
         main = GetComponent<MainTask>();
@@ -107,6 +149,8 @@ public class Saver : MonoBehaviour
         Application.Quit();
     }
 
+    #region WANT TO SAVE - POPUPS
+
     // Ask user if she wants to save the csv files
     static bool WantsToSaveData()
     {
@@ -144,6 +188,8 @@ public class Saver : MonoBehaviour
         }
         return wantsToSave;
     }
+
+    #endregion
 
     #region DEFINE FRAME DATA
 
@@ -325,19 +371,27 @@ public class Saver : MonoBehaviour
             + ", \"Movement params\": " + jsonMovement + " }";
 
         // Save entry to db
-        string path_to_DB = Path.Combine(path_to_data, "esperimentiVR.db");
-        int lastIDFromDB = main.lastIDFromDB;
+        string path_to_DB = Path.Combine(path_to_MEF, "esperimentiVR.db");
         int new_ID = lastIDFromDB + 1;
         DB.GetComponent<InteractWithDB>().AddRecording(path_to_DB, new_ID, new_Date, new_Task, new_Param);
 
         // Save CSV
-        string path_to_data_PerFrame = Path.Combine(path_to_data, "DATI", (DateTime.Now.ToString("yyyy_MM_dd") + "_ID" + new_ID.ToString() + "data.csv"));
-        string path_to_data_Supplement = Path.Combine(path_to_data, "DATI", (DateTime.Now.ToString("yyyy_MM_dd") + "_ID" + new_ID.ToString() + "supplement.csv"));
+        string path_to_data_PerFrame = Path.Combine(path_to_MEF, "DATI", (DateTime.Now.ToString("yyyy_MM_dd") + "_ID" + new_ID.ToString() + "data.csv"));
+        string path_to_data_Supplement = Path.Combine(path_to_MEF, "DATI", (DateTime.Now.ToString("yyyy_MM_dd") + "_ID" + new_ID.ToString() + "supplement.csv"));
         File.WriteAllText(path_to_data_PerFrame, sb_PerFrame.ToString());
         File.WriteAllText(path_to_data_Supplement, sb_Supplement.ToString());
 
-        Debug.Log($"Data successfully saved in {Path.Combine(path_to_data, "DATI")}");
+        Debug.Log($"Data successfully saved in {Path.Combine(path_to_MEF, "DATI")}");
  
         #endregion
     }
+
+    public void QuitGame()
+    {
+#if UNITY_EDITOR
+                UnityEditor.EditorApplication.isPlaying = false;
+#endif
+        Application.Quit();
+    }
+
 }

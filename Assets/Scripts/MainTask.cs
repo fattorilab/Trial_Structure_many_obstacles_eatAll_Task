@@ -128,42 +128,6 @@ public class MainTask : MonoBehaviour
 
     #endregion
 
-    void Awake()
-    {
-        #region Choose monkey and set path
-
-        if (MEF.ToLower() == "ciuffa") { path_to_data = Path.Combine(path_to_data, "MEF27"); }
-        else if (MEF.ToLower() == "lisca") { path_to_data = Path.Combine(path_to_data, "MEF28"); }
-        else
-        {
-            bool ans = EditorUtility.DisplayDialog("Wrong MEF name", "Unable to find the monkey" + MEF, //don't know how to put a simple popup here (the choice is irrelevant)
-                            "Close and check MEF in MainTask");
-            QuitGame();
-        }
-
-        Debug.Log($"If desidered, files will be saved in {path_to_data}");
-
-        #endregion
-
-        #region Connect to DB and get last ID
-
-        try
-        {
-            DB = GameObject.Find("DB");
-            string path_to_DB = Path.Combine(path_to_data, "esperimentiVR.db");
-            lastIDFromDB = DB.GetComponent<InteractWithDB>().GetLastIDfromDB(path_to_DB);
-        }
-        catch
-        {
-            bool ans = EditorUtility.DisplayDialog("Cannot interact with DB", "It is not possible to read last ID from database. You may not to be able to save data",
-                            "Close and check DB", "Proceed anyway");
-            if (ans) { QuitGame(); }
-        }
-
-        #endregion
-
-    }
-
     void Start()
     {
 

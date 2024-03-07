@@ -26,13 +26,11 @@ namespace FFmpegOut
             #region ADDED BY EDO: SET OUTPUT PATH
 
             GameObject experiment = GameObject.Find("Experiment");
-            string path_to_data = experiment.GetComponent<MainTask>().path_to_data;
-            //GameObject DB = GameObject.Find("DB");
-            //int lastIDFromDB = DB.GetComponent<InteractWithDB>().GetLastIDfromDB();
-            int lastIDFromDB = experiment.GetComponent<MainTask>().lastIDFromDB;
+            string path_to_MEF = experiment.GetComponent<Saver>().path_to_MEF;
+            int lastIDFromDB = experiment.GetComponent<Saver>().lastIDFromDB;
             string fileName = DateTime.Now.ToString("yyyy_MM_dd") + "_ID" + (lastIDFromDB + 1).ToString() + $"_{name}";
             fileName += preset.GetSuffix(); // adds .mp4
-            path_to_video = Path.Combine(path_to_data, "VIDEO", fileName);
+            path_to_video = Path.Combine(path_to_MEF, "VIDEO", fileName);
             #endregion
 
             //name += System.DateTime.Now.ToString(" yyyy MMdd HHmmss");

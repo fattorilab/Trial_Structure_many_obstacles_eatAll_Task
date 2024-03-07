@@ -17,12 +17,7 @@ public class InteractWithDB: MonoBehaviour
     string path_to_data;
     GameObject experiment;
 
-    void Start()
-    {
-        experiment = GameObject.Find("Experiment");
-        path_to_data = experiment.GetComponent<MainTask>().path_to_data;
-        path_to_data = Path.Combine(path_to_data, "esperimentiVR.db");
-    }
+    void Start() { }
 
     public int GetLastIDfromDB(string path_to_DB)
     {

@@ -148,7 +148,7 @@ namespace FFmpegOut
                 _streamWriter.Close();
 
                 // Save or delete csv file depending on user prompt
-                if (!Saver.wants2saveData)
+                if (!Saver.wants2saveVideos)
                 {
                     File.Delete(path_to_data_RecorderFrames);
                 }
@@ -181,13 +181,14 @@ namespace FFmpegOut
             // Check if the StreamWriter is not initialized
             if (!_isStreamWriterInitialized)
             {
-                string path_to_data = experiment.GetComponent<MainTask>().path_to_data;
-                int lastIDFromDB = experiment.GetComponent<MainTask>().lastIDFromDB;
+                // Get path_to_data and lastIDFromDB from the Saver
+                string path_to_MEF = experiment.GetComponent<Saver>().path_to_MEF;
+                int lastIDFromDB = experiment.GetComponent<Saver>().lastIDFromDB;
 
                 // Check if path_to_data and lastIDFromDB are not null or zero
-                if (!string.IsNullOrEmpty(path_to_data) && lastIDFromDB != 0)
+                if (!string.IsNullOrEmpty(path_to_MEF) && lastIDFromDB != 0)
                 {
-                    path_to_data_RecorderFrames = Path.Combine(path_to_data, "DATI", (DateTime.Now.ToString("yyyy_MM_dd") 
+                    path_to_data_RecorderFrames = Path.Combine(path_to_MEF, "DATI", (DateTime.Now.ToString("yyyy_MM_dd") 
                         + "_ID" + (lastIDFromDB + 1).ToString() + $"_{camera.tag}" + "_recorderFrames.csv"));
                     _streamWriter = new StreamWriter(path_to_data_RecorderFrames);
                     _streamWriter.WriteLine("Timestamp,Frame,Reward_count");
