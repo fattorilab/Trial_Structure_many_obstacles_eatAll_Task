@@ -18,7 +18,7 @@ public class MainTask : MonoBehaviour
     float timer = 0f;
     float time_to_end = 0f;
     public int nullpositionTime; //for releasing when juicy
-    [HideInInspector] public long start_ms; // zero della registrazione in ms
+    [HideInInspector] public long starttime; // zero della registrazione in ms
     [HideInInspector] public int frame_number = 0; // internal frame counter
     [HideInInspector] public bool exp_has_started = false;
     #endregion
@@ -356,7 +356,7 @@ public class MainTask : MonoBehaviour
     void Update()
     {
         frame_number++;
-        if (frame_number == 10) //Unity needs some frames to start, please keep this at 10, Gianni
+        if (frame_number == 10) // Unity needs some frames to start, please keep this at 10, Gianni
         {
             camM.backgroundColor = Color.black;
             camL.backgroundColor = Color.black;
@@ -364,7 +364,7 @@ public class MainTask : MonoBehaviour
 
             // START
             experiment.GetComponent<Ardu>().SendStartRecordingOE();
-            start_ms = System.DateTimeOffset.Now.ToUnixTimeMilliseconds();
+            starttime = System.DateTimeOffset.Now.ToUnixTimeMilliseconds();
             exp_has_started = true;
             Debug.Log("START OF SESSION");
         }

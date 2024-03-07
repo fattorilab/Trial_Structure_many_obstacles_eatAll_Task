@@ -13,12 +13,14 @@ public class Saver : MonoBehaviour
 {
     #region Time variables
     [HideInInspector] public long starttime = 0;
+    [HideInInspector] public long milliseconds = 0;
     [HideInInspector] private long time = 0;
     bool got_start = false;
     #endregion
 
     #region Saving variables
-    [HideInInspector] public static bool wants2save;
+    [HideInInspector] public static bool wants2saveData;
+    [HideInInspector] public static bool wants2saveVideos;
     [HideInInspector] public string path_to_data;
     #endregion
 
@@ -80,7 +82,7 @@ public class Saver : MonoBehaviour
             if (main.exp_has_started)
             {
                 // Sync saver start-time with main start-time
-                starttime = main.start_ms;
+                starttime = main.starttime;
                 got_start = true;
             }
         }
@@ -93,19 +95,54 @@ public class Saver : MonoBehaviour
 
     private void OnApplicationQuit()
     {
-        // Ask user if she wants to save
-        wants2save = WantsToSave();
-        if (wants2save)
+        // Ask user if she wants to save the videos
+        wants2saveVideos = WantsToSaveVideos();
+
+        // Ask user if she wants to save the csv files
+        wants2saveData = WantsToSaveData();
+        if (wants2saveData)
         {
             saveAllData(";");
         }
         Application.Quit();
     }
 
-    // Ask user if she wants to save
-    static bool WantsToSave()
+    // Ask user if she wants to save the csv files
+    static bool WantsToSaveData()
     {
-        return EditorUtility.DisplayDialog("SAVE DATA", "Do you want to save movies and csv?", "Yes", "No");
+        bool wantsToSave = EditorUtility.DisplayDialog("SAVE DATA", "Do you want to save frame data?", "Yes", "No");
+        if (!wantsToSave)
+        {
+            // Ask user if she's sure not to save
+            string The_End = ("Everything not saved will be lost.@- Nintendo \"Quit Screen\" message.").Replace("@", System.Environment.NewLine);
+            bool sure = EditorUtility.DisplayDialog("ARE YOU SURE?", The_End, "Yes", "No");
+            if (!sure)
+            {
+                // If user not sure, ask again
+                return WantsToSaveData();
+            }
+            return wantsToSave;
+        }
+        return wantsToSave;
+    }
+
+    // Ask user if she wants to save the csv files
+    static bool WantsToSaveVideos()
+    {
+        bool wantsToSave = EditorUtility.DisplayDialog("SAVE VIDEO", "Do you want to save the video?", "Yes", "No");
+        if (!wantsToSave)
+        {
+            // Ask user if she's sure not to save
+            string The_End = ("Everything not saved will be lost.@- Nintendo \"Quit Screen\" message.").Replace("@", System.Environment.NewLine);
+            bool sure = EditorUtility.DisplayDialog("ARE YOU SURE?", The_End, "Yes", "No");
+            if (!sure) 
+            {
+                // If user not sure, ask again
+                return WantsToSaveVideos(); 
+            }
+            return wantsToSave;
+        }
+        return wantsToSave;
     }
 
     #region DEFINE FRAME DATA
@@ -121,7 +158,7 @@ public class Saver : MonoBehaviour
         // PerFrameData[(PerFrameData.Count - 1)].Add((time).ToString());
 
         // Manage the 10-frames initialization and save time
-        long milliseconds = System.DateTimeOffset.Now.ToUnixTimeMilliseconds();
+        milliseconds = System.DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
         // PerFrameData[(PerFrameData.Count - 1)].Add((milliseconds - starttime).ToString());
         PerFrameData[(PerFrameData.Count - 1)].Add((milliseconds - starttime).ToString());
@@ -204,12 +241,14 @@ public class Saver : MonoBehaviour
 
         bool found = false;
 
-        for (int i = 0; i < SupplementData.Count; i++)
+        // Loop from last to first
+        for (int i = SupplementData.Count - 1; i >= 0; i--)
         {
             if (SupplementData[i][0] == identifier)
             {
-                SupplementData[i][(SupplementData.Count - 1)] = (time).ToString();
+                SupplementData[i][(SupplementData[i].Count - 1)] = (milliseconds - main.starttime).ToString();
                 found = true;
+                break;
             }
         }
 

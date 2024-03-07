@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.59517455, g: 0.6807535, b: 0.75270545, a: 1}
+  m_IndirectSpecularColor: {r: 0.59517413, g: 0.68075246, b: 0.7527039, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -1007,6 +1007,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   starttime: 0
+  milliseconds: 0
   path_to_data: 
   PupilData: {fileID: 1592972314}
 --- !u!114 &1239289645
@@ -1022,11 +1023,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nullpositionTime: 200
-  start_ms: 0
+  starttime: 0
   frame_number: 0
   exp_has_started: 0
   MEF: ciuffa
-  path_to_data: C:\Users\admin\Desktop\Registrazioni_VR_copia
+  path_to_data: C:\Users\edoar\Desktop\Fattori_lab\test_data_folder
   RECORD_EYES: 0
   lastIDFromDB: 0
   seed: 1
@@ -1797,7 +1798,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1913868724617376015}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 980d34c50a6ca594e9711aa1902f5509, type: 3}
   m_Name: 
@@ -2104,7 +2105,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1913868726121276998}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 980d34c50a6ca594e9711aa1902f5509, type: 3}
   m_Name: 

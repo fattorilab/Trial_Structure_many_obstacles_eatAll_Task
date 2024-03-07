@@ -137,7 +137,7 @@ namespace FFmpegOut
 
             // VIDEO
 
-            if (!Saver.wants2save)
+            if (!Saver.wants2saveVideos)
             {
                 File.Delete(path_to_video);
             }
@@ -148,7 +148,7 @@ namespace FFmpegOut
                 _streamWriter.Close();
 
                 // Save or delete csv file depending on user prompt
-                if (!Saver.wants2save)
+                if (!Saver.wants2saveData)
                 {
                     File.Delete(path_to_data_RecorderFrames);
                 }
@@ -175,21 +175,15 @@ namespace FFmpegOut
 
             GameObject experiment = GameObject.Find("Experiment");
             int frame_num = experiment.GetComponent<MainTask>().frame_number;
-            long main_start_time = experiment.GetComponent<MainTask>().start_ms;
+            long main_start_time = experiment.GetComponent<MainTask>().starttime;
             int reward_count = experiment.GetComponent<Ardu>().reward_counter;
 
             // Check if the StreamWriter is not initialized
             if (!_isStreamWriterInitialized)
             {
-                //// Get the Experiment and DB GameObjects
-                //GameObject DB = GameObject.Find("DB");
-
-                //// Get path_to_data and lastIDFromDB from the other scripts
-                //// Replace MainTask and InteractWithDB with your actual script classes
                 string path_to_data = experiment.GetComponent<MainTask>().path_to_data;
-                //int lastIDFromDB = DB.GetComponent<InteractWithDB>().GetLastIDfromDB();
-
                 int lastIDFromDB = experiment.GetComponent<MainTask>().lastIDFromDB;
+
                 // Check if path_to_data and lastIDFromDB are not null or zero
                 if (!string.IsNullOrEmpty(path_to_data) && lastIDFromDB != 0)
                 {
