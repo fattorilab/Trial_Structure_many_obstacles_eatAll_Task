@@ -76,7 +76,10 @@ public class CreateTreesAndTargets : MonoBehaviour
         {
             if (child.name != "Ground")
             {
-                exp.GetComponent<Saver>().addObject(child.GetInstanceID().ToString(), child.transform.position.x, child.transform.position.z, child.transform.eulerAngles.y, child.tag);
+                exp.GetComponent<Saver>().addObject(child.GetInstanceID().ToString(), child.tag,
+                                            child.transform.position.x, child.transform.position.y, child.transform.position.z,
+                                            child.transform.rotation.x, child.transform.rotation.y, child.transform.rotation.z,
+                                            child.transform.localScale.x, child.transform.localScale.y, child.transform.localScale.z); // transform.eulerAngles.y
             }
         }
     }

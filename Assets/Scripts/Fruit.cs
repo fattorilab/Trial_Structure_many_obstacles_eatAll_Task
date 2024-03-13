@@ -94,10 +94,12 @@ public class Fruit : MonoBehaviour
                     beginTimeJuicy = Time.time;
                     fake_juicy = true;
                     player.GetComponent<Movement>().is_eating = true;*/
-                    experiment.GetComponent<Saver>().addObject(transform.name,
-                                                            transform.position.x,
-                                                            transform.position.z,
-                                                            transform.eulerAngles.y, "ObviouslyWrongFruitTrigger");
+
+                    //experiment.GetComponent<Saver>().addObject(transform.name,                                                                                                                                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                    //                                        transform.position.x,
+                    //                                        transform.position.z,
+                    //                                        transform.eulerAngles.y, "ObviouslyWrongFruitTrigger");
+
                     obviously_wrong_but_possible = false;
                     experiment.GetComponent<MainTask>().phase = 98;
                 }
@@ -161,10 +163,10 @@ public class Fruit : MonoBehaviour
                     //eating
                     if (juicy) 
                     {
-                        experiment.GetComponent<Saver>().addObject(transform.name,
-                                                                transform.position.x,
-                                                                transform.position.z,
-                                                                transform.eulerAngles.y, "FruitTrigger");
+                        //experiment.GetComponent<Saver>().addObject(transform.name,                                                                                                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        //                                        transform.position.x,
+                        //                                        transform.position.z,
+                        //                                        transform.eulerAngles.y, "FruitTrigger");
                         juicy = false;
                         experiment.GetComponent<Ardu>().SendReward(experiment.GetComponent<MainTask>().reward_length);
 
@@ -180,10 +182,10 @@ public class Fruit : MonoBehaviour
                         
                     } else if (fake_juicy)
                     {
-                        experiment.GetComponent<Saver>().addObject(transform.name,
-                                                                transform.position.x,
-                                                                transform.position.z,
-                                                                transform.eulerAngles.y, "WrongFruitTrigger");
+                        //experiment.GetComponent<Saver>().addObject(transform.name,                                                                                                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        //                                        transform.position.x,
+                        //                                        transform.position.z,
+                        //                                        transform.eulerAngles.y, "WrongFruitTrigger");
                         fake_juicy = false;
                         experiment.GetComponent<MainTask>().phase = 98;
                     }

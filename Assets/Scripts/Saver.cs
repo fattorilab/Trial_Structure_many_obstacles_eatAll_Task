@@ -21,8 +21,6 @@ public class Saver : MonoBehaviour
     #region Time variables
     [HideInInspector] public long starttime = 0;
     [HideInInspector] public long milliseconds = 0;
-    [HideInInspector] private long time = 0;
-    bool got_start = false;
     #endregion
 
     #region Saving variables
@@ -100,34 +98,17 @@ public class Saver : MonoBehaviour
         player = GameObject.Find("Player");
         #endregion
 
-        #region Get Task variables
-        current_trial = main.current_trial;
-        current_condition = main.current_condition;
-        current_state = main.current_state;
-        error_state = main.error_state;
-        #endregion
-
         // Manage time: ridiculously low starttime to highlight initial 10 frames
         starttime = System.DateTimeOffset.Now.ToUnixTimeMilliseconds() + 1000000;
 
         // Seed
-        addObject("Seed", main.seed, main.seed, main.seed, "Seed");
+        addObject("Seed", "Seed", main.seed, main.seed, main.seed, main.seed, main.seed, main.seed, main.seed, main.seed, main.seed);
     }
 
     void LateUpdate()
     {
         // Add current frame data
         addDataPerFrame();
-
-        if (!got_start)
-        {
-            if (main.exp_has_started)
-            {
-                // Sync saver start-time with main start-time
-                starttime = main.starttime;
-                got_start = true;
-            }
-        }
 
         if (Input.GetKeyDown("escape"))
         {
@@ -201,42 +182,30 @@ public class Saver : MonoBehaviour
         //Add new sub List
         PerFrameData.Add(new List<string>());
 
-        // PerFrameData[(PerFrameData.Count - 1)].Add((time).ToString());
-
-        // Manage the 10-frames initialization and save time
-        milliseconds = System.DateTimeOffset.Now.ToUnixTimeMilliseconds();
-
-        // PerFrameData[(PerFrameData.Count - 1)].Add((milliseconds - starttime).ToString());
-        PerFrameData[(PerFrameData.Count - 1)].Add((milliseconds - starttime).ToString());
-        // Frame count
+        // Frames and time
+        long milliseconds = System.DateTimeOffset.Now.ToUnixTimeMilliseconds();
+        if (main.starttime == 0) { main.starttime = milliseconds; }
+        PerFrameData[(PerFrameData.Count - 1)].Add((milliseconds - main.starttime).ToString());
         PerFrameData[(PerFrameData.Count - 1)].Add((main.frame_number).ToString());
-        // Seed
-        PerFrameData[(PerFrameData.Count - 1)].Add((main.seed).ToString("F5"));
-        // Number of trials
-        PerFrameData[(PerFrameData.Count - 1)].Add((current_trial).ToString("F5"));
+        // Trials
+        PerFrameData[(PerFrameData.Count - 1)].Add((main.current_trial).ToString("F5"));
+        PerFrameData[(PerFrameData.Count - 1)].Add((main.trials_win).ToString("F5"));
         // Condition
-        PerFrameData[(PerFrameData.Count - 1)].Add((current_condition).ToString("F5"));
+        PerFrameData[(PerFrameData.Count - 1)].Add((main.current_condition).ToString("F5"));
         // State
-        PerFrameData[(PerFrameData.Count - 1)].Add((current_state).ToString("F5"));
-        PerFrameData[(PerFrameData.Count - 1)].Add((error_state).ToString("F5"));
-        // Reward
+        PerFrameData[(PerFrameData.Count - 1)].Add((main.current_state).ToString("F5"));
+        PerFrameData[(PerFrameData.Count - 1)].Add(main.error_state);
+        // Arduino
         PerFrameData[(PerFrameData.Count - 1)].Add((ardu.reward_counter).ToString("F5"));
-
-        // Task specific variables
-        PerFrameData[(PerFrameData.Count - 1)].Add((main.correct_trials).ToString());
-        PerFrameData[(PerFrameData.Count - 1)].Add((main.phase).ToString());
-        PerFrameData[(PerFrameData.Count - 1)].Add((main.row_close_active).ToString());
-        PerFrameData[(PerFrameData.Count - 1)].Add((main.row_middle_active).ToString());
-        PerFrameData[(PerFrameData.Count - 1)].Add((main.row_far_active).ToString());
-        PerFrameData[(PerFrameData.Count - 1)].Add((main.correct_target_name));
-        PerFrameData[(PerFrameData.Count - 1)].Add((main.interval).ToString("F7"));
-
-        // Moves
         PerFrameData[(PerFrameData.Count - 1)].Add((ardu.ax1).ToString("F5"));
         PerFrameData[(PerFrameData.Count - 1)].Add((ardu.ax2).ToString("F5"));
+        // Player positions
         PerFrameData[(PerFrameData.Count - 1)].Add((player.transform.position.x).ToString("F5"));
+        PerFrameData[(PerFrameData.Count - 1)].Add((player.transform.position.y).ToString("F5"));
         PerFrameData[(PerFrameData.Count - 1)].Add((player.transform.position.z).ToString("F5"));
+        PerFrameData[(PerFrameData.Count - 1)].Add((player.transform.eulerAngles.x).ToString("F5"));
         PerFrameData[(PerFrameData.Count - 1)].Add((player.transform.eulerAngles.y).ToString("F5"));
+        PerFrameData[(PerFrameData.Count - 1)].Add((player.transform.eulerAngles.z).ToString("F5"));
         // Eyes
         PerFrameData[(PerFrameData.Count - 1)].Add((PupilDataStream.PupilTimeStamps).ToString());
         PerFrameData[(PerFrameData.Count - 1)].Add((PupilDataStream.CenterRightPupilPx[0]).ToString("F5"));
@@ -245,8 +214,8 @@ public class Saver : MonoBehaviour
         PerFrameData[(PerFrameData.Count - 1)].Add((PupilDataStream.CenterLeftPupilPx[1]).ToString("F5"));
         PerFrameData[(PerFrameData.Count - 1)].Add((PupilDataStream.DiameterLeft).ToString("F5"));
         PerFrameData[(PerFrameData.Count - 1)].Add((PupilDataStream.DiameterRight).ToString("F5"));
-        PerFrameData[(PerFrameData.Count - 1)].Add((PupilDataStream.confidence_L).ToString("F5"));
-        PerFrameData[(PerFrameData.Count - 1)].Add((PupilDataStream.confidence_R).ToString("F5"));
+        //PerFrameData[(PerFrameData.Count - 1)].Add((PupilDataStream.confidence_L).ToString("F5"));
+        //PerFrameData[(PerFrameData.Count - 1)].Add((PupilDataStream.confidence_R).ToString("F5"));
     }
     #endregion
 
@@ -255,27 +224,27 @@ public class Saver : MonoBehaviour
     // Initiate List to store data
     List<List<string>> SupplementData = new List<List<string>>();
 
-    public void addObject(string identifier, float x_pos, float z_pos,
-                            /* float y_pos, float x_scale, float y_scale, float z_scale,
-                            float x_rot, float y_rot, float z_rot, */
-                            float orientation, string type)
+    public void addObject(string identifier, string type,
+                            float x_pos, float y_pos, float z_pos,
+                                float x_rot, float y_rot, float z_rot,
+                                 float x_scale, float y_scale, float z_scale)
     {
+        long milliseconds = System.DateTimeOffset.Now.ToUnixTimeMilliseconds();
+        if (main.starttime == 0) { main.starttime = milliseconds; }
+
         SupplementData.Add(new List<string>()); //Adds new sub List
         SupplementData[(SupplementData.Count - 1)].Add(identifier);
+        SupplementData[(SupplementData.Count - 1)].Add(type);
         SupplementData[(SupplementData.Count - 1)].Add((x_pos).ToString("F5"));
-        SupplementData[(SupplementData.Count - 1)].Add((z_pos).ToString("F5"));
-        /*
         SupplementData[(SupplementData.Count - 1)].Add((y_pos).ToString("F5"));
-        SupplementData[(SupplementData.Count - 1)].Add((x_scale).ToString("F5"));
-        SupplementData[(SupplementData.Count - 1)].Add((y_scale).ToString("F5"));
-        SupplementData[(SupplementData.Count - 1)].Add((z_scale).ToString("F5"));
+        SupplementData[(SupplementData.Count - 1)].Add((z_pos).ToString("F5"));
         SupplementData[(SupplementData.Count - 1)].Add((x_rot).ToString("F5"));
         SupplementData[(SupplementData.Count - 1)].Add((y_rot).ToString("F5"));
         SupplementData[(SupplementData.Count - 1)].Add((z_rot).ToString("F5"));
-        */
-        SupplementData[(SupplementData.Count - 1)].Add((orientation).ToString("F5"));
-        SupplementData[(SupplementData.Count - 1)].Add(type);
-        SupplementData[(SupplementData.Count - 1)].Add((time).ToString());
+        SupplementData[(SupplementData.Count - 1)].Add((x_scale).ToString("F5"));
+        SupplementData[(SupplementData.Count - 1)].Add((y_scale).ToString("F5"));
+        SupplementData[(SupplementData.Count - 1)].Add((z_scale).ToString("F5"));
+        SupplementData[(SupplementData.Count - 1)].Add((milliseconds - main.starttime).ToString());
         SupplementData[(SupplementData.Count - 1)].Add("-1");
     }
 
@@ -314,13 +283,14 @@ public class Saver : MonoBehaviour
         string Line = "";
 
         #region Create Data writer
-        string general_vars = "Unity_timestamp; Frame; Seed; ";
-        string task_general_vars = "Trial; Condition; Current_state; Error_state; Reward_count; ";
-        // Change as desired (AddFrameData() method must be changed accordingly)
-        string task_specific_vars = "Correct trials; phase; close_active; middle_active; far_active; correct_target; interval; ";
-        string move_vars = "player_x_arduino; player_y_arduino; player_x; player_y; player_z_rot; ";
+        string general_vars = "Unity_timestamp; Frame; ";
+        string task_general_vars = "Trial; Correct Trials; Current_condition; Current_state; Error_type; Reward_count; ";
+        // Change task_specific_vars as desired (AddFrameData() method must be changed accordingly)
+        string task_specific_vars = ""; // correct_target; interval; 
+        string move_vars = "player_x_arduino; player_y_arduino; player_x;  player_y; player_z; player_x_rot; player_y_rot; player_z_rot; ";
         string eyes_vars = "pupil_timestamp; px_eye_right; py_eye_right; px_eye_left; py_eye_left; " +
-                                "eye_diameter_left; eye_diameter_right; eye_confidence_left; eye_confidence_right";
+                                "eye_diameter_left; eye_diameter_right";
+        // eye_confidence_left; eye_confidence_right";
 
         sb_PerFrame.AppendLine(general_vars + task_general_vars + task_specific_vars + move_vars + eyes_vars);
 
@@ -338,8 +308,8 @@ public class Saver : MonoBehaviour
         #endregion
 
         #region Create Supplement writer
-        sb_Supplement.AppendLine("Name; x; y; orientation; type; TimeEntry; TimeExit");
-        // ("Name; x; y; z; scale_x; scale_y; scale_z; rot_x; rot_y; rot_z; TimeEntry; TimeExit")
+        sb_Supplement.AppendLine("Identifier; Type; x; y; z; " +
+            "rot_x; rot_y; rot_z; scale_x; scale_y; scale_z; TimeEntry; TimeExit");
 
         for (int index = 0; index < SupplementData.Count; index++)
         {

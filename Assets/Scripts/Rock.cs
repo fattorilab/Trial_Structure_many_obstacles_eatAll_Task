@@ -15,11 +15,14 @@ public class Rock : MonoBehaviour
     {
         if (other.name == "Player")
         {
-            experiment.GetComponent<Saver>().addObject(transform.tag,
-                                                    transform.position.x,
-                                                    transform.position.z,
-                                                    transform.eulerAngles.y, "TouchedARock");
-            experiment.GetComponent<MainTask>().phase = 103;
+            experiment.GetComponent<Saver>().addObject(transform.tag, "TouchedARock",
+                                                    transform.position.x, transform.position.y, transform.position.z,
+                                                    transform.rotation.x, transform.rotation.y, transform.rotation.z,
+                                                    transform.localScale.x, transform.localScale.y, transform.localScale.z); // transform.eulerAngles.y
+
+            // Do something upon contact
+            Debug.LogWarning("PLAYER TOUCHED ROCK, BUT ROCK HAS NO BEHAVIOUR SET UP. MIND THAT.");
+            // experiment.GetComponent<MainTask>().phase = 103;
         }
     }
 }

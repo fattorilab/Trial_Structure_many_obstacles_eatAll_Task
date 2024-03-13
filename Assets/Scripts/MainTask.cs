@@ -1,146 +1,147 @@
-using Random = UnityEngine.Random;
 using System;
-using System.IO;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEditor;
-//using UnityEditor; test
-//using UnityEditor.Recorder;
+using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
+using System.Globalization;
+using UnityEngine;
 using PupilLabs;
 
 
 public class MainTask : MonoBehaviour
 {
+    #region Variables Declaration
 
-    #region Time variables
-    float timer = 0f;
-    float time_to_end = 0f;
-    public int nullpositionTime; //for releasing when juicy
-    [HideInInspector] public long starttime; // zero della registrazione in ms
-    [HideInInspector] public int frame_number = 0; // internal frame counter
-    [HideInInspector] public bool exp_has_started = false;
-    #endregion
+    [SerializeField]
 
-    #region Saving variables
-    [Header("Saving info")]
-    public string MEF;
-    public string path_to_data;
-    public bool RECORD_EYES;
-    [HideInInspector] public int lastIDFromDB;
-    [HideInInspector] public int seed;
+    [HideInInspector]
+    [Header("GameObjects and components")]
 
-    #endregion
-
-    #region Reward variables
-    [Header("Reward info")]
-    //used by fruit??
-    public int reward_length;
-    public int minimumRewardTime; //delay before juicy ??unnecessary??
-    [HideInInspector] public float minimumDistance; //to get juicy
-    #endregion
-
-    #region GameObjects and components
-
-    [Header("Cameras")]
+    // Cams
     Camera camM;
     Camera camL;
     Camera camR;
 
-    GameObject experiment;
-    GameObject environment;
-    [HideInInspector] public GameObject Player;
+    // Pupil
+    public PupilDataStream PupilDataStreamScript;
+    private RequestController RequestControllerScript;
+    private bool PupilDataConnessionStatus;
+
+    // Game
+    [HideInInspector] GameObject environment;
+    [HideInInspector] GameObject experiment;
+    [HideInInspector] GameObject player;
+
+    [Header("Saving info")]
+    public string MEF;
+    public string path_to_data = "C:/Users/admin/Desktop/Registrazioni_VR/";
+    public bool RECORD_EYES;
+    [HideInInspector] public int lastIDFromDB;
+    [HideInInspector] public int seed = 12345;
+    [HideInInspector] public long starttime = 0;
+    [HideInInspector] public int frame_number = 0;
+
+    [Header("Reward")]
+    public int RewardLength = 50;
+    float RewardLength_in_sec; // Formatting
+    public int reward_counter = 0; //just for having this information readibily accessible
+    public int minimumRewardTime; //delay before juicy ??unnecessary??
+    [HideInInspector] public float minimumDistance; //to get juicy
+
+    [Header("Trials Info")]
+    public string file_name_positions;
+    // States
+    public int current_state;
+    private int last_state;
+    [HideInInspector] public string error_state;
+    // Trials
+    public int current_trial;
+    public int trials_win;
+    public int trials_lose;
+    public int[] trials_for_target;
+    public int trials_for_cond;
+    // Conditions
+    private int randomIndex;
+    public List<int> condition_list;
+    [HideInInspector] public int current_condition;
+    //
+    private float lastevent;
+    private string identifier;
+    private bool isMoving = false;
+    private bool first_frame;
+
+    [Header("Target Info")]
+    // List, because it is changing size during the runtime
+    public List<Vector3> target_positions = new List<Vector3>();
     GameObject[] targets;
-    GameObject correctTarget;
-    public GameObject Fruit_Abstract;
-    [HideInInspector] GameObject DB;
-    [HideInInspector] public GameObject PupilDataManagment;
+    public GameObject TargetPrefab; 
+    public Vector3 TargetSize;
+    public Vector3 CorrectTargetCurrentPosition;
+
+    #region Materials
+    [Header("Target Materials")]
+    public Material neutral_mat;
+    public Material red_mat;
+    public Material chosen_mat;
+    public Material prejuicy_mat;
+    public Material juicy_mat;
+    public Material eaten_mat;
+    #endregion
+
+    [Header("Epoches Info")]
+    // Array, because is not changing size during the runtime
+    public float[] FREE_timing = { 0.3f, 0.6f, 0.9f };
+    public float[] DELAY_timing = { 0.3f, 0.6f, 0.9f };
+    public float[] RT_timing = { 0.3f, 0.6f, 0.9f };
+
+    private List<int> FREE_timing_list;
+    private List<int> DELAY_timing_list;
+    private List<int> RT_timing_list;
+
+    private float FREE_duration;
+    private float DELAY_duration;
+    private float RT_duration;
+    
+
+    [Header("Arduino Info")]
+    public Ardu ardu;
+    public float arduX;
+    public float arduY;
+    //public int dead_zone;
+      
+    [Header("PupilLab Info")]
+    public Vector2 centerRightPupilPx = new Vector2(float.NaN, float.NaN);
+    public Vector2 centerLeftPupilPx = new Vector2(float.NaN, float.NaN);
+    public float diameterRight = float.NaN;
+    public float diameterLeft = float.NaN;
+    public bool pupilconnection;
 
     #endregion
 
-    #region Task general variables
-
-    // [HideInInspector] public int current_trial = 0;
-    [HideInInspector] public int current_condition = 0;
-    [HideInInspector] public int current_state = 0;
-    [HideInInspector] public int error_state = 0;
-
-    #endregion
-
-    #region Task specific variables
-
-    Vector3[] fixed_positions = { new Vector3(-2f, 0.5f, 9f), new Vector3(0f, 0.5f, 9.5f), new Vector3(2f, 0.5f, 9f),  //L_close, C_close, R_close
-                                new Vector3(-4f, 0.5f, 12f), new Vector3(0f, 0.5f, 13f),  new Vector3(4f, 0.5f, 12f),  //L_mid,   C_mid,   R_mid
-                                new Vector3(-6f, 0.5f, 15f), new Vector3(0f, 0.5f, 16.5f), new Vector3(6f, 0.5f, 15f)};//L_far,   C_far,   R_far
-    string[] fixed_names = {"Fruit_left_close", "Fruit_center_close", "Fruit_right_close",
-                            "Fruit_left_middle", "Fruit_center_middle", "Fruit_right_middle",
-                            "Fruit_left_far", "Fruit_center_far", "Fruit_right_far"};
-    float[] fixed_orientations = {160, 0, -160, 0, 0, 0, 0, 0, 0};
-
-    public myEnum2 Trial_type = new myEnum2();
-    public enum myEnum2
-    {
-        GivenTarget,
-        FreeChoice,
-        ManyObstacles,
-        ManyObstacles_EatThemAll
-    };
-    public int TargetsInObstacleTask;
-
-    public myEnum Target_setting = new myEnum();
-    public enum myEnum
-    {
-        RandomThree,
-        MiddleThree,
-        Six,
-        All,
-        Custom
-    };
-
-    public float REACTION_TIME;
-    public bool abortTrial = true; //mod by marrti
-    public bool RESET_NOT_JUST_BLOCKED;
-    public bool AVOID_SAME_TARGET_TWICE;
-    //used by fruit??
-    public float whitescreenseconds;                      
-    public int maximum_trial_time;
-    public bool RESET_IF_FULL_TURN;
-    public bool RESET_AT_TARGET_NOT_GIVEN;
-
-    [HideInInspector] public int current_trial = 0;
-    [HideInInspector] public int correct_trials = 0;
-    [HideInInspector] public int phase = 0;
-    [HideInInspector] public float interval = 0; // To decide interval of green: comment it out in Reset() and make this visible in inspector.
-    [HideInInspector] public bool row_close_active = false;
-    [HideInInspector] public bool row_middle_active = false;
-    [HideInInspector] public bool row_far_active = false;
-    [HideInInspector] public string correct_target_name = "Unknown";
-    bool movement_prohibition;
-    bool dont_change_correct_target = false;
-
-    //For Many Obstacles
-    float[] mo_x_pos = {-15, -10, -5, 0, 5, 10, 15};
-    float[] mo_z_pos = { 5, 10, 15, 20, 25, 30, 35};
-    private int fruits_eaten = 0;
-    private int fruits_to_eat = 0;
-    bool manyObstacleCondition = false;
-
-    #endregion
-
+    // Start is called before the first frame update
     void Start()
     {
 
-        Application.runInBackground = true;
-        Random.InitState(seed);
+        // Setup
+        UnityEngine.Random.InitState(seed);
+        System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
+        RewardLength_in_sec = RewardLength / 1000f;
+        first_frame = true;
 
-        #region Get GameObjects and components
+        // States
+        current_state = 0;
+        last_state = -1;
+        error_state = "";
 
-        // Eyes
-        PupilDataManagment.GetComponent<RequestController>().connectOnEnable = RECORD_EYES;
-        PupilDataManagment.SetActive(true);
-
-        // Get GameObjects
+        // Trials
+        current_trial = 0;
+        trials_win = 0;
+        trials_lose = 0;
+   
+        // GameObjects
+        ardu = GetComponent<Ardu>(); 
+        player = GameObject.Find("Player");
         experiment = GameObject.Find("Experiment");
         environment = GameObject.Find("Environment");
 
@@ -149,537 +150,498 @@ public class MainTask : MonoBehaviour
         camL = GameObject.Find("Left Camera").GetComponent<Camera>();
         camR = GameObject.Find("Right Camera").GetComponent<Camera>();
 
+        #region PUPIL MANAGEMENT
+        /*
+        PupilDataStreamScript = GameObject.Find("PupilDataManagment").GetComponent<PupilDataStream>();
+        RequestControllerScript = GameObject.Find("PupilDataManagment").GetComponent<RequestController>();
+        RequestControllerScript.connectOnEnable = pupilconnection;
+        */
         #endregion
 
-        #region ALL POSSIBLE SETTINGS
+        // Import targets coordinates from csv file into target_positions list
+        // and initiate the targets in a disable state (i.e invisible)
+        InstantiateTargets(target_positions);
 
-        /////////////////ALL//POSSIBLE//SETTINGS///////////////////////////////////////////////////////////////////////////////
-        if (Trial_type == myEnum2.ManyObstacles || Trial_type == myEnum2.ManyObstacles_EatThemAll)
-        {
-            manyObstacleCondition = true;
+        // Define number of trials per each target
+        trials_for_target = new int[target_positions.Count];
 
-            /*
-            if (Target_setting == myEnum.MiddleThree || Target_setting == myEnum.RandomThree)
-            {
-                fruits_to_eat = 3;
-                GetComponent<Saver>().addObject("Target_Setting: ThreeWithObstacles", 0, 0, 0, "Setting");
-            } else if (Target_setting == myEnum.Custom)
-            {
-                fruits_to_eat = 2;
-                GetComponent<Saver>().addObject("Target_Setting: TwoWithObstacles", 0, 0, 0, "Setting");
-            } else
-            {
-                fruits_to_eat = 1;
-                GetComponent<Saver>().addObject("Target_Setting: OneWithObstacles", 0, 0, 0, "Setting");
-            }*/
-            fruits_to_eat = TargetsInObstacleTask;
-            
-            targets = new GameObject[fruits_to_eat];
-            for (int i = 0; i < targets.Length; i++)
-            {
-                targets[i] = Instantiate(Fruit_Abstract, new Vector3(0,0.5f,10), Quaternion.Euler(0, 0, 0), environment.transform);
-                targets[i].name = "Fruit" + i.ToString();
-                if (Trial_type == myEnum2.ManyObstacles_EatThemAll)
-                {
-                    targets[i].GetComponent<Fruit>().multiple_fruit_mode = true;
-                }
-            }
+        // Save target settings (????)
+        GetComponent<Saver>().addObject("Target_Setting: Custom", "Setting", 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
-            row_close_active = false;
-            row_middle_active = false;
-            row_far_active = false;
+        // Generate condition and timing vectors
+        condition_list = CreateRandomSequence(target_positions.Count, trials_for_cond * target_positions.Count);
+        FREE_timing_list = CreateRandomSequence(FREE_timing.Length, trials_for_cond * target_positions.Count);
+        DELAY_timing_list = CreateRandomSequence(DELAY_timing.Length, trials_for_cond * target_positions.Count);
+        RT_timing_list = CreateRandomSequence(RT_timing.Length, trials_for_cond * target_positions.Count);
 
-            
-        }
-        else if (Target_setting == myEnum.Custom)
-        {
-            Vector3[]balls_from_csv = experiment.GetComponent<ReadFile>().balls_from_csv;
-            Debug.Log(balls_from_csv[0]);
-            targets = new GameObject[balls_from_csv.Length];
-
-            for (int i = 0; i < targets.Length; i++)
-            {
-                targets[i] = Instantiate(Fruit_Abstract, balls_from_csv[i], Quaternion.Euler(0, 0, 0), environment.transform);
-                targets[i].name = "Fruit" + i.ToString();
-                GetComponent<Saver>().addObject(targets[i].name, balls_from_csv[i].x, balls_from_csv[i].z, 0, "Position");
-            }
-
-            GetComponent<Saver>().addObject("Target_Setting: Custom", 0, 0, 0, "Setting");
-
-        }
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        else if (Target_setting == myEnum.All)
-        {
-            targets = new GameObject[9];
-            for (int i = 0; i < targets.Length; i++)
-            {
-                targets[i] = Instantiate(Fruit_Abstract, fixed_positions[i], Quaternion.Euler(0, fixed_orientations[i], 0), environment.transform);
-                targets[i].name = fixed_names[i];
-                GetComponent<Saver>().addObject(targets[i].name, fixed_positions[i].x, fixed_positions[i].z, fixed_orientations[i], "Position");
-            }
-
-            row_close_active = true;
-            row_middle_active = true;
-            row_far_active = true;
-
-            GetComponent<Saver>().addObject("Target_Setting: All", 0, 0, 0, "Setting");
-        }
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        else if (Target_setting == myEnum.Six)
-        {
-            targets = new GameObject[6];
-            for (int i = 0; i < 3; i++)
-            {
-                targets[i] = Instantiate(Fruit_Abstract, fixed_positions[i], Quaternion.Euler(0, fixed_orientations[i], 0), environment.transform);
-                targets[i].name = fixed_names[i];
-                GetComponent<Saver>().addObject(targets[i].name, fixed_positions[i].x, fixed_positions[i].z, fixed_orientations[i], "Position");
-            }
-            for (int i = 3; i < 6; i++)
-            {
-                targets[i] = Instantiate(Fruit_Abstract, fixed_positions[i+3], Quaternion.Euler(0, fixed_orientations[i+3], 0), environment.transform);
-                targets[i].name = fixed_names[i+3];
-                GetComponent<Saver>().addObject(targets[i].name, fixed_positions[i+3].x, fixed_positions[i+3].z, fixed_orientations[i+3], "Position");
-            }
-
-            row_close_active = true;
-            row_middle_active = false;
-            row_far_active = true;
-
-            GetComponent<Saver>().addObject("Target_Setting: Six", 0, 0, 0, "Setting");
-        }
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        else if (Target_setting == myEnum.MiddleThree)
-        {
-            targets = new GameObject[3];
-            for (int i = 0; i < 3; i++)
-            {
-                targets[i] = Instantiate(Fruit_Abstract, fixed_positions[i + 3], Quaternion.Euler(0, fixed_orientations[i + 3], 0), environment.transform);
-                targets[i].name = fixed_names[i + 3];
-                GetComponent<Saver>().addObject(targets[i].name, fixed_positions[i + 3].x, fixed_positions[i + 3].z, fixed_orientations[i + 3], "Position");
-            }
-
-            row_close_active = false;
-            row_middle_active = true;
-            row_far_active = false;
-
-            GetComponent<Saver>().addObject("Target_Setting: MiddleThree", 0, 0, 0, "Setting");
-        }  
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        else if (Target_setting == myEnum.RandomThree)
-        {
-            targets = new GameObject[9];
-            for (int i = 0; i < targets.Length; i++)
-            {
-                targets[i] = Instantiate(Fruit_Abstract, fixed_positions[i], Quaternion.Euler(0, fixed_orientations[i], 0), environment.transform);
-                targets[i].name = fixed_names[i];
-                GetComponent<Saver>().addObject(targets[i].name, fixed_positions[i].x, fixed_positions[i].z, fixed_orientations[i], "Position");
-            }
-
-            GetComponent<Saver>().addObject("Target_Setting: RandomThree", 0, 0, 0, "Setting");
-        }
-
-
-        //Save the Settings
-        if (Trial_type == myEnum2.GivenTarget)
-        {
-            GetComponent<Saver>().addObject("Trial_Type: Given Target", 0, 0, 0, "Setting");
-        } else if (Trial_type == myEnum2.FreeChoice)
-        {
-            GetComponent<Saver>().addObject("Trial_Type: Free Choice", 0, 0, 0, "Setting");
-        } else if (Trial_type == myEnum2.ManyObstacles)
-        {
-            GetComponent<Saver>().addObject("Trial_Type: Many Obstacles", 0, 0, 0, "Setting");
-        }
-        else if (Trial_type == myEnum2.ManyObstacles_EatThemAll)
-        {
-            GetComponent<Saver>().addObject("Trial_Type: Many Obstacles eat them all", 0, 0, 0, "Setting");
-        }
-
-
-        GetComponent<Saver>().addObject("Reward Length", reward_length, 0, 0, "Setting");
-        GetComponent<Saver>().addObject("Whitescreen [s]", whitescreenseconds, 0, 0, "Setting");
-        GetComponent<Saver>().addObject("Reaction Time", REACTION_TIME, 0, 0, "Setting");
-
-        GetComponent<Saver>().addObject("Abort Trial", System.Convert.ToSingle(abortTrial), 0, 0, "Setting");
-        GetComponent<Saver>().addObject("reset not just block", System.Convert.ToSingle(RESET_NOT_JUST_BLOCKED), 0, 0, "Setting");
-        GetComponent<Saver>().addObject("avoid the same target twice", System.Convert.ToSingle(AVOID_SAME_TARGET_TWICE), 0, 0, "Setting");
-        
-        GetComponent<Saver>().addObject("minimal distance to get juicy", minimumDistance, 0, 0, "Setting");
-        GetComponent<Saver>().addObject("nullpositionTime", nullpositionTime, 0, 0, "Setting");
-
-        GetComponent<Saver>().addObject("maximal trial time", maximum_trial_time, 0, 0, "Setting");
-        GetComponent<Saver>().addObject("reset if full turn", System.Convert.ToSingle(RESET_IF_FULL_TURN), 0, 0, "Setting");
-        GetComponent<Saver>().addObject("reset if uncued ball is reached", System.Convert.ToSingle(RESET_AT_TARGET_NOT_GIVEN), 0, 0, "Setting");
-
-        #endregion
-
-        reset();
     }
 
-    
     void Update()
     {
         frame_number++;
-        if (frame_number == 10) // Unity needs some frames to start, please keep this at 10, Gianni
-        {
-            camM.backgroundColor = Color.black;
-            camL.backgroundColor = Color.black;
-            camR.backgroundColor = Color.black;
 
-            // START
-            experiment.GetComponent<Ardu>().SendStartRecordingOE();
+        #region PUPIL MANAGEMENT
+        /* serve ancora ?
+        PupilDataConnessionStatus = PupilDataStreamScript.subsCtrl.IsConnected;
+
+        if (PupilDataConnessionStatus)
+        {
+            //Debug.Log((centerRightPupilPx[0]).ToString());
+            centerRightPupilPx = PupilDataStreamScript.CenterRightPupilPx;
+            centerLeftPupilPx = PupilDataStreamScript.CenterLeftPupilPx;
+            diameterRight = PupilDataStreamScript.DiameterRight;
+            diameterLeft = PupilDataStreamScript.DiameterLeft;
+            ardu.SendPupilLabData(centerRightPupilPx[0], centerRightPupilPx[1], centerLeftPupilPx[0], centerLeftPupilPx[1]);
+        }
+        */
+        #endregion
+
+        #region Ardu sanity check
+        arduX = ardu.ax1;   //note: if arduino is not connected (or not working) the arduX,Y = NaN;
+        arduY = ardu.ax2;
+
+        if ((!float.IsNaN(arduX) && arduX != 0) || (!float.IsNaN(arduY) && arduY != 0) || Input.GetAxis("Vertical") != 0 || Input.GetAxis("Horizontal") != 0) //if arduX is nan, I cannot compare it with 0
+        {
+            isMoving = true;
+        }
+        else
+        {
+            isMoving = false;
+        }
+        #endregion
+
+
+        // Start on first operating frame
+        if (first_frame) 
+        {
+            Debug.Log("START TASK");
+            // Start time main task unity
             starttime = System.DateTimeOffset.Now.ToUnixTimeMilliseconds();
-            exp_has_started = true;
-            Debug.Log("START OF SESSION");
+            // Send START trigger
+            ardu.SendStartRecordingOE();           
+            first_frame = false;
         }
 
-        #region GAME BEHAVIOUR (TIMER AND PHASES)
 
-        // Press Q to quit and abort the current trial
-        //mod marrti---------------------------------
-        if (abortTrial == true)
+        #region StateMachine
+ 
+        switch (current_state)
         {
-            if (Input.GetKeyDown(KeyCode.Q))
-            {
-                reset();
-            }
-        }
-        //--------------------------------------------
+            case 0: //INTERTRIAL
 
-        timer += Time.deltaTime;
-        if (phase == 103) //immediate reset
-        {
-            time_to_end = timer;
-            dont_change_correct_target = true;
-           current_trial += 1;
-            reset();
-        }
-        if (timer > time_to_end + 0.5f && phase == 102) //wrong fruit end
-        {
-           current_trial += 1;
-            reset();
-        }
-        if (timer > time_to_end + 0.5f + whitescreenseconds && phase == 101) //end whitescreen
-        {
-            environment.transform.position += new Vector3(0, 1000f, 0);
-            camL.clearFlags = CameraClearFlags.Skybox;
-            camR.clearFlags = CameraClearFlags.Skybox;
-            camM.clearFlags = CameraClearFlags.Skybox;
+                #region State Beginning (executed once upon entering)
 
-            if (!dont_change_correct_target) { correct_trials += 1; }
-           current_trial += 1;
-            reset();
-        }
-        if (timer > time_to_end + 0.5f && phase == 100)
-        {
-            environment.transform.position += new Vector3(0, -1000f, 0);
-            camL.clearFlags = CameraClearFlags.SolidColor;
-            camR.clearFlags = CameraClearFlags.SolidColor;
-            camM.clearFlags = CameraClearFlags.SolidColor;
-
-            camL.backgroundColor = new Color(0.8f, 0.8f, 0.8f);
-            camR.backgroundColor = new Color(0.8f, 0.8f, 0.8f);
-            camM.backgroundColor = new Color(0.8f, 0.8f, 0.8f);
-
-            phase = 101;
-        } else if (phase == 99) //corect target
-        {
-            time_to_end = timer;
-            dont_change_correct_target = false;
-            phase = 100;
-        }
-        else if (phase == 98) //wrong target
-        {
-            time_to_end = timer;
-            dont_change_correct_target = true;
-            phase = 102;
-        }
-        else if (timer > (1 + interval + REACTION_TIME) && phase == 3 && Player.transform.position == new Vector3(0, 0.25f, 0)) //REACTION PHASE
-        {
-            dont_change_correct_target = true;
-            reset();
-        }
-        else if (timer > (1+ interval) && phase == 2) //Fruits turn red
-        {
-            if (Trial_type == myEnum2.GivenTarget)
-            {
-                if (RESET_AT_TARGET_NOT_GIVEN)
+                if (last_state != current_state)
                 {
+                    current_condition = -1;
+
+                    lastevent = Time.time;
+                    last_state = current_state;
+                    error_state = "";
+                }
+                #endregion
+
+                #region State Body (executed every frame while in state)
+
+                current_condition = -1;
+
+                #endregion
+
+                #region State End (executed once upon exiting)
+                if (!isMoving)
+                {   
+                    // Prepare everything for next trial
+
+                    // Choose the correct target
+                    current_condition = condition_list[0];
+                    CorrectTargetCurrentPosition = target_positions[current_condition];
+
+                    // Picking first time from the timing list to select epoch durations in this trial
+                    FREE_duration = FREE_timing[FREE_timing_list[0]];
+                    DELAY_duration = DELAY_timing[DELAY_timing_list[0]];
+                    RT_duration = RT_timing[RT_timing_list[0]];
+
+                    // Move to state 1
+                    current_state = 1;
+
+                    // Trial starts
+                    current_trial++;
+
+                }
+                #endregion
+
+                break;
+
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            case 1: //FREE
+
+                #region State Beginning
+                if (last_state != current_state) 
+                {
+                    // Enable targets
+
+                    //Beginning routine
+                    lastevent = Time.time;
+                    last_state = current_state;
+                    error_state = "";
+                }
+                #endregion
+
+                #region State Body
+                if (isMoving)
+                {
+                    error_state = "ERR: Moving in FREE";
+                    current_state = -99;
+                }
+                #endregion
+
+                #region State End
+                if ((Time.time - lastevent) >= FREE_duration && !isMoving) //StateEnd
+                {
+                    current_state = 2;
+                }
+                #endregion
+
+                break;
+
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            case 2: //DELAY
+
+                #region State Beginning
+                if (last_state != current_state)
+                {
+                    // Set targets color
                     for (int i = 0; i < targets.Length; i++)
                     {
-                        targets[i].GetComponent<Fruit>().obviously_wrong_but_possible = true;
+                        targets[i].GetComponent<Renderer>().material = juicy_mat; // CHANGE
                     }
+
+                    //Beginning routine
+                    lastevent = Time.time;
+                    last_state = current_state;
+                    error_state = "";
                 }
-                correctTarget.GetComponent<Fruit>().obviously_wrong_but_possible = false;
-                correctTarget.GetComponent<Fruit>().chosen = false;
-            }
-            else if (Trial_type == myEnum2.FreeChoice)
-            {
-                for (int i = 0; i < targets.Length; i++)
+                #endregion
+
+                #region State Body
+                if (isMoving)
                 {
-                    targets[i].GetComponent<Fruit>().chosen = false;
-                    targets[i].GetComponent<Fruit>().fake_prejuicy = true;
+                    error_state = "ERR: Moving in DELAY";
+                    current_state = -99;
                 }
-            }
+                #endregion
 
-            correctTarget.GetComponent<Fruit>().prejuicy = true;
-            Player.GetComponent<Movement>().restrict_backwards = 1;
-            Player.GetComponent<Movement>().restrict_forwards = 1;
-            Player.GetComponent<Movement>().restrict_horizontal = 1;
-            movement_prohibition = false;
-            phase = 3;
-            //experiment.GetComponent<Ardu>().SendStopReferenceMarkerOE();
-
-        } else if (timer > 1 && phase == 1) //Fruits turn green
-        {
-            if (Trial_type == myEnum2.GivenTarget)
-            {
-                correctTarget.GetComponent<Fruit>().chosen = true;
-            } else if (Trial_type == myEnum2.FreeChoice)
-            {
-                for (int i = 0; i < targets.Length; i++)
+                #region State End
+                if ((Time.time - lastevent) >= DELAY_duration && !isMoving)
                 {
-                    targets[i].GetComponent<Fruit>().chosen = true;
+                    current_state = 3;
                 }
-            }
+                #endregion
+
+                break;
 
 
-            phase = 2;
-            //experiment.GetComponent<Ardu>().SendStartReferenceMarkerOE();
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        } else if (timer > 0.5 && phase == 0) //Fruits appear
-        {
-            for (int i = 0; i < targets.Length; i++)
-            {
-                targets[i].GetComponents<MeshRenderer>()[0].enabled = true;
-            }
+            case 3: //RT
 
-            phase = 1;
-        } else if (phase == 0 && manyObstacleCondition)
-        {
-            for (int i = 0; i < targets.Length; i++)
-            {
-                targets[i].GetComponents<MeshRenderer>()[0].enabled = true;
-
-                if (Trial_type == myEnum2.ManyObstacles)
+                #region State Beginning
+                if (last_state != current_state)
                 {
-                    targets[i].GetComponent<Fruit>().classic_look = true;
-                    targets[i].GetComponent<Fruit>().prejuicy = true;
-                }
-            }
-            Player.GetComponent<Movement>().restrict_backwards = 1;
-            Player.GetComponent<Movement>().restrict_forwards = 1;
-            Player.GetComponent<Movement>().restrict_horizontal = 1;
-            movement_prohibition = false;
-            phase = 10;
-            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            //Make a grid and randomly place the balls
-
-            if (!dont_change_correct_target)
-            {
-                environment.GetComponent<Rocks>().deleteRocks();
-
-                int rnd = Random.Range(0, mo_x_pos.Length);
-                Shuffle(mo_x_pos);
-                Shuffle(mo_z_pos);
-                for (int i = 0; i < targets.Length; i++)
-                {
-                    
-                    targets[i].GetComponent<Fruit>().classic_look = true;
-                    targets[i].GetComponent<Fruit>().prejuicy = true;
-
-                    if (mo_z_pos[i] > 15) //artificially make it less likely to just be there
+                    // Switch target color
+                    for (int i = 0; i < targets.Length; i++)
                     {
-                        targets[i].transform.position = new Vector3(mo_x_pos[i], 0.5f, mo_z_pos[i]);
-                        GetComponent<Saver>().addObject(targets[i].name, targets[i].transform.position.x, targets[i].transform.position.z, 0, "Position");
-                    } else
-                    {
-                        targets[i].transform.position = new Vector3(mo_x_pos[i], 0.5f, mo_z_pos[mo_z_pos.Length - 1]);
-                        GetComponent<Saver>().addObject(targets[i].name, targets[i].transform.position.x, targets[i].transform.position.z, 0, "Position");
+                        targets[i].GetComponent<Renderer>().material = prejuicy_mat;
                     }
-                    
-                }
 
-                for (int i = targets.Length; i < mo_x_pos.Length; i++)
+                    //Beginning routine
+                    lastevent = Time.time;
+                    last_state = current_state;
+                    error_state = "";
+                }
+                #endregion
+
+                #region State Body
+                if (isMoving) 
                 {
-                    environment.GetComponent<Rocks>().MakeRock(mo_x_pos[i], mo_z_pos[i]);
+                    current_state = 99;
                 }
+                #endregion
 
-                for (int i = 0; i < mo_x_pos.Length - 1; i++)
+                #region State End
+                if ((Time.time - lastevent) >= RT_duration && !isMoving)
                 {
-                    environment.GetComponent<Rocks>().MakeRock(mo_x_pos[i], mo_z_pos[i + 1]);
-                    environment.GetComponent<Rocks>().MakeRock(mo_x_pos[i + 1], mo_z_pos[i]);
+                    error_state = "ERR: Not Moving in RT";
+                    current_state = -99;
                 }
+                #endregion
 
-                environment.GetComponent<Rocks>().saveObjects();
-            }
-            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                break;
 
-        }
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        //too early
-        if (movement_prohibition && Player.GetComponent<Movement>().keypressed && RESET_NOT_JUST_BLOCKED)
-        {
-            dont_change_correct_target = true;
-            reset();
-        }
+            case -99: //ERROR
 
+                #region State Beginning
+                if (last_state != current_state) //StateBeginning
+                {
+                    Debug.Log(error_state);
+                    identifier = "Dummy for debugging";
+                    GetComponent<Saver>().addObjectEnd(identifier);
+                    reset_lose();
 
-        if (phase < 50 && !Player.GetComponent<Movement>().is_eating)
-        {
-            if (RESET_IF_FULL_TURN && ((Player.transform.eulerAngles.y > 175 && Player.transform.eulerAngles.y < 185 )|| (Player.transform.eulerAngles.y < -175 && Player.transform.eulerAngles.y > -185)) && !manyObstacleCondition)
-            {
-                Debug.Log("Full_Turn");
-                dont_change_correct_target = true;
-                reset();
-            }
+                    //Beginning routine
+                    lastevent = Time.time;
+                    last_state = current_state;
+                }
+                #endregion
 
-            if (timer > maximum_trial_time)
-            {
-                Debug.Log("Maximum Trial Time was reached");
-                dont_change_correct_target = true;
-                reset();
-            }
+                #region State Body
+
+                #endregion
+
+                #region State End
+                if (true)
+                {
+                    current_state = 0;
+                    error_state = "";
+                }
+                #endregion
+
+                break;
+
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            case 99: //WIN
+
+                #region State Beginning
+                if (last_state != current_state)
+                {
+                    Debug.Log("TRIAL DONE");
+                    identifier = "Dummy for debugging";
+                    GetComponent<Saver>().addObjectEnd(identifier);
+                    reset_win();
+
+                    //Beginning routine
+                    lastevent = Time.time;
+                    last_state = current_state;
+
+                }
+                #endregion
+
+                #region State Body
+
+                if (condition_list.Count == 0) { QuitGame();  }
+
+                #endregion
+
+                #region State End
+                if (true)
+                {
+                    current_state = 0;
+                }
+                #endregion
+
+                break;
+
         }
 
         #endregion
 
+        // Manual reward
+        if (Input.GetKeyDown("space"))        { ardu.SendReward(RewardLength); }
+        reward_counter = ardu.reward_counter;
+
     }
 
-
-    void OnApplicationQuit() // se l'app si interrompe (es. pause dell'editor) senza  che venga premuto 'esc'
+    void OnApplicationQuit()
     {
-        experiment.GetComponent<Ardu>().SendStopRecordingOE();
+        ardu.SendStopRecordingOE();
         Debug.Log("END OF SESSION");
-    }
-
-    void reset()
-    {
-        timer = 0f;
-        phase = 0;
-        Player.transform.position = new Vector3(0,0.25f,0);
-        Player.transform.eulerAngles = new Vector3(0, 0, 0);
-        Player.GetComponent<Movement>().restrict_backwards = 0;
-        Player.GetComponent<Movement>().restrict_forwards = 0;
-        Player.GetComponent<Movement>().restrict_horizontal = 0;
-        Player.GetComponent<Movement>().is_eating = false;
-        Player.GetComponent<Movement>().fix_collision_mod();
-        movement_prohibition = true;
-        //MeshRenderer[] ml = ObstacleL.GetComponents<MeshRenderer>();
-        //ml[0].enabled = false;
-
-        if (!dont_change_correct_target || Trial_type != myEnum2.ManyObstacles_EatThemAll)
-        {
-            for (int i = 0; i < targets.Length; i++)
-            {
-                targets[i].GetComponents<MeshRenderer>()[0].enabled = false;
-                targets[i].GetComponent<Fruit>().eaten = false;
-                targets[i].GetComponent<Fruit>().chosen = false;
-                targets[i].GetComponent<Fruit>().prejuicy = false;
-                targets[i].GetComponent<Fruit>().fake_prejuicy = false;
-            }
-        }
-
-        interval = Random.Range(0.5f, 2.5f);
-
-        set_position();
-    }
-    
-    void set_position()
-    {
-        if (!dont_change_correct_target && !manyObstacleCondition) // || Trial_type == myEnum2.GivenTarget
-        {
-            //If random three, get new pos
-            if (Target_setting == myEnum.RandomThree)
-            {
-                float placing = Random.Range(0f, 3f);
-                for (int i = 0; i < targets.Length; i++)
-                {
-                    targets[i].SetActive(false);
-
-                }
-                if (placing < 1)
-                {
-                    row_close_active = true;
-                    row_middle_active = false;
-                    row_far_active = false;
-                    targets[0].SetActive(true);
-                    targets[1].SetActive(true);
-                    targets[2].SetActive(true);
-
-                }
-                else if (placing > 2)
-                {
-                    row_close_active = false;
-                    row_middle_active = false;
-                    row_far_active = true;
-                    targets[6].SetActive(true);
-                    targets[7].SetActive(true);
-                    targets[8].SetActive(true);
-                }
-                else
-                {
-                    row_close_active = false;
-                    row_middle_active = true;
-                    row_far_active = false;
-                    targets[3].SetActive(true);
-                    targets[4].SetActive(true);
-                    targets[5].SetActive(true);
-                }
-            }
-
-            List<GameObject> activeTargets = new List<GameObject>();
-            foreach (GameObject target in targets)
-            {
-                if (target.activeSelf)
-                {
-                    if (target != correctTarget || !AVOID_SAME_TARGET_TWICE)
-                    {
-                        activeTargets.Add(target);
-                    }
-                }
-            }
-
-            // Choose a random active target
-            int randomIndex = Random.Range(0, activeTargets.Count);
-            correctTarget = activeTargets[randomIndex];
-
-            correct_target_name = correctTarget.name;
-            Debug.Log("The correct target is: " + correct_target_name);
-        }
-        
-    }
-
-    private System.Random _random = new System.Random();
-
-    void Shuffle(float[] array)
-    {
-        int p = array.Length;
-        for (int n = p - 1; n > 0; n--)
-        {
-            int r = _random.Next(0, n);
-            float t = array[r];
-            array[r] = array[n];
-            array[n] = t;
-        }
-    }
-
-    public void fruit_eaten_notification()
-    {
-        fruits_eaten += 1;
-        if (fruits_eaten == fruits_to_eat)
-        {
-            fruits_eaten = 0;
-            phase = 99;
-        }
+        QuitGame();
     }
 
     public void QuitGame()
     {
-        #if UNITY_EDITOR
-                UnityEditor.EditorApplication.isPlaying = false;
-        #endif
-                Application.Quit();
+        // save any game data here
+#if UNITY_EDITOR
+        // Application.Quit() does not work in the editor so
+        // UnityEditor.EditorApplication.isPlaying need to be set to false to end the game
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
     }
 
+    #region Reset methods
+
+    void reset_win()
+    {
+        // Disable targets
+        for (int i = 0; i < targets.Length; i++)
+        {
+            targets[i].GetComponent<Renderer>().enabled = false;
+        }
+
+        // Send reward
+        ardu.SendReward(RewardLength);
+
+        // Reset states
+        current_state = 0;
+        lastevent = Time.time;
+
+        // Count trial
+        trials_win++;
+        trials_for_target[current_condition]++;
+
+        // Remove condition
+        condition_list.RemoveAt(0);
+        FREE_timing_list.RemoveAt(0);
+        DELAY_timing_list.RemoveAt(0);
+        RT_timing_list.RemoveAt(0);
+    }
+
+    void reset_lose()
+    {
+        // Disable targets
+        for (int i = 0; i < targets.Length; i++)
+        {
+            targets[i].GetComponent<Renderer>().enabled = false;
+        }
+
+        condition_list = SwapVector(condition_list);
+        FREE_timing_list = SwapVector(FREE_timing_list); //not strictly necessary, but better for coherence...
+        DELAY_timing_list = SwapVector(DELAY_timing_list);
+        RT_timing_list = SwapVector(RT_timing_list);
+
+        current_state = 0;
+        lastevent = Time.time;
+        trials_lose++;
+    }
+
+    #endregion
+
+    #region Manage conditions
+
+    public List<int> CreateRandomSequence(int n, int k) //n, number of elements; k, length of the required vector
+    {
+        var vector = new List<int>();
+        for (int i = 0; i < Math.Floor((double)k / n) + 1; i++)
+        {
+            var tmp = Enumerable.Range(0, n).OrderBy(x => UnityEngine.Random.Range(0, n)).ToList();
+            vector.AddRange(tmp);
+        }
+
+        // If k is not a multiple of n, we need to remove the extra elements
+        if (vector.Count > k)
+        {
+            vector = vector.Take(k).ToList();
+        }
+
+        return vector;
+    }
+
+    public List<int> SwapVector(List<int> vector)
+    {
+        // Moves the first half to fifth of the vector to the end of the vector
+        int i = vector.Count / UnityEngine.Random.Range(2, 5);  
+        if (i > 0)
+        {
+            vector = vector.Skip(i).Concat(vector.Take(i)).ToList();
+        }
+        return vector;
+    }
+
+    void set_epochs_duration()
+    {
+        int randomIndex_FREE = UnityEngine.Random.Range(0, FREE_timing.Length);
+        int randomIndex_DELAY = UnityEngine.Random.Range(0, DELAY_timing.Length);
+        int randomIndex_RT = UnityEngine.Random.Range(0, RT_timing.Length);
+
+        FREE_duration = FREE_timing[randomIndex_FREE];
+        DELAY_duration = DELAY_timing[randomIndex_DELAY];
+        RT_duration = RT_timing[randomIndex_RT];
+
+    }
+
+    #endregion
+
+    private void LoadPositionsFromCSV(List<Vector3> target_positions)
+    {
+        string filePath = Application.dataPath + "/" + file_name_positions + ".csv";
+        if (File.Exists(filePath))
+        {
+            using (StreamReader reader = new StreamReader(filePath))
+            {
+                string line = reader.ReadLine(); // Salta la riga degli header se presente
+                while (!reader.EndOfStream)
+                {
+                    line = reader.ReadLine();
+                    string[] fields = line.Split(',');
+                    if (fields.Length >= 3)
+                    {
+                        float x, y, z;
+                        if (float.TryParse(fields[0], NumberStyles.Float, CultureInfo.InvariantCulture, out x) &&
+                            float.TryParse(fields[1], NumberStyles.Float, CultureInfo.InvariantCulture, out y) &&
+                            float.TryParse(fields[2], NumberStyles.Float, CultureInfo.InvariantCulture, out z))
+                        {
+                            Vector3 position = new Vector3(x, y, z);
+                            target_positions.Add(position);
+                        }
+                        else
+                        {
+                            Debug.LogWarning("Impossible to convert coordinates in numbers: " + line);
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Line has not enough coordinates: " + line);
+                    }
+                }
+            }
+        }
+        else
+        {
+            Debug.LogError("File does not exist: " + filePath);
+        }
+    }
+
+    private void InstantiateTargets(List<Vector3> target_positions)
+    {
+
+        // Import targets coordinates from csv file into target_positions list
+        LoadPositionsFromCSV(target_positions);
+        Debug.Log($"Target positioned as: {target_positions}");
+
+        // Instantiate targets (switched off)
+        targets = new GameObject[target_positions.Count];
+        for (int i = 0; i < targets.Length; i++)
+        {
+            // Instantiate
+            targets[i] = Instantiate(TargetPrefab, target_positions[i], TargetPrefab.transform.rotation, environment.transform); // Quaternion.Euler(0, 0, 0), environment.transform);
+            targets[i].name = $"{TargetPrefab.name}_" + i.ToString();
+            targets[i].transform.localScale = TargetSize;
+
+            // Disable (make invisible)
+            targets[i].GetComponent<Renderer>().enabled = false;
+
+            // Add target to data to be saved
+            identifier = "Target" + current_condition.ToString();
+
+            GetComponent<Saver>().addObject(identifier,
+                "Target", // target_positions[i].x, target_positions[i].z, 0, "Position");
+                targets[i].transform.position.x,
+                targets[i].transform.position.y,
+                targets[i].transform.position.z,
+                TargetPrefab.transform.rotation[0],
+                TargetPrefab.transform.rotation[1],
+                TargetPrefab.transform.rotation[2],
+                TargetSize[0],
+                TargetSize[1],
+                TargetSize[2]
+                );
+        }
+    }
 }
