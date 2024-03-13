@@ -1009,6 +1009,8 @@ MonoBehaviour:
   starttime: 0
   milliseconds: 0
   path_to_data: 
+  path_to_MEF: 
+  lastIDFromDB: 0
   PupilData: {fileID: 1592972314}
 --- !u!114 &1239289645
 MonoBehaviour:
@@ -1022,43 +1024,59 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 23250581479892f43b4af8e1e4923187, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nullpositionTime: 200
-  starttime: 0
-  frame_number: 0
-  exp_has_started: 0
+  camM: {fileID: 0}
+  PupilDataStreamScript: {fileID: 0}
   MEF: ciuffa
-  path_to_data: C:\Users\edoar\Desktop\Fattori_lab\test_data_folder
+  path_to_data: C:\Users\edoar\Documents\Fattori_lab\test_data_folder
   RECORD_EYES: 0
   lastIDFromDB: 0
   seed: 1
-  reward_length: 500
+  starttime: 0
+  frame_number: 0
+  RewardLength: 50
+  reward_counter: 0
   minimumRewardTime: 200
   minimumDistance: 2
-  Player: {fileID: 1913868725626146597}
-  Fruit_Abstract: {fileID: 7803970846313583056, guid: 69ab4cefa3c3a7347a697075b8b2e78e, type: 3}
-  PupilDataManagment: {fileID: 1592972314}
-  current_condition: 0
+  file_name_positions: custom_positions
   current_state: 0
   error_state: 0
-  Trial_type: 0
-  TargetsInObstacleTask: 4
-  Target_setting: 1
-  REACTION_TIME: 2
-  abortTrial: 0
-  RESET_NOT_JUST_BLOCKED: 0
-  AVOID_SAME_TARGET_TWICE: 1
-  whitescreenseconds: 0.3
-  maximum_trial_time: 600
-  RESET_IF_FULL_TURN: 1
-  RESET_AT_TARGET_NOT_GIVEN: 1
   current_trial: 0
-  correct_trials: 0
-  phase: 0
-  interval: 100
-  row_close_active: 0
-  row_middle_active: 0
-  row_far_active: 0
-  correct_target_name: Unknown
+  trials_win: 0
+  trials_lose: 0
+  trials_for_target: 
+  trials_for_cond: 0
+  condition_list: 
+  current_condition: 0
+  target_positions: []
+  TargetPrefab: {fileID: 7803970846313583056, guid: 69ab4cefa3c3a7347a697075b8b2e78e, type: 3}
+  TargetSize: {x: 0, y: 0, z: 0}
+  CorrectTargetCurrentPosition: {x: 0, y: 0, z: 0}
+  neutral_mat: {fileID: 2100000, guid: 2aedcb3bbffb74445b2c0bff17464dcb, type: 2}
+  red_mat: {fileID: 2100000, guid: d831a1238a330a4478afbf69681c2b89, type: 2}
+  chosen_mat: {fileID: 2100000, guid: 1c1a9f2ebad7437438a8a866ba3eb9ec, type: 2}
+  prejuicy_mat: {fileID: 2100000, guid: 3a42063aa29caf3428d6dcfa8d4c62a2, type: 2}
+  juicy_mat: {fileID: 2100000, guid: ceb5d8103c46f504488a03ce57193689, type: 2}
+  eaten_mat: {fileID: 2100000, guid: 5b6d35cbaeefa3d439ba82a928056bac, type: 2}
+  FREE_timing:
+  - 0.3
+  - 0.6
+  - 0.9
+  DELAY_timing:
+  - 0.3
+  - 0.6
+  - 0.9
+  RT_timing:
+  - 0.3
+  - 0.6
+  - 0.9
+  ardu: {fileID: 0}
+  arduX: 0
+  arduY: 0
+  centerRightPupilPx: {x: NaN, y: NaN}
+  centerLeftPupilPx: {x: NaN, y: NaN}
+  diameterRight: NaN
+  diameterLeft: NaN
+  pupilconnection: 0
 --- !u!114 &1239289646
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1953,6 +1971,9 @@ MonoBehaviour:
   presstime: 0
   Exp: {fileID: 1239289640}
   is_eating: 0
+  HasCollided: 0
+  CollisionTime: 0
+  CollidedObjectName: 
 --- !u!4 &1913868726121276997
 Transform:
   m_ObjectHideFlags: 0

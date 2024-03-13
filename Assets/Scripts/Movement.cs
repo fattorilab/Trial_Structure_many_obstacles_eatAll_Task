@@ -34,6 +34,11 @@ public class Movement : MonoBehaviour
     float collision_modifier = 1;
     GameObject target;
 
+    // MANAGE COLLISIONS
+    public bool HasCollided = false;
+    public float CollisionTime = 0f;
+    public string CollidedObjectName = "";
+
     // Start is called before the first frame update
     void Start()
     {
@@ -51,12 +56,23 @@ public class Movement : MonoBehaviour
     {
         collision_modifier = 0.5f;
         //if (collision.gameObject.name == "YourWallName") { rigidbody.velocity = Vector3.zero;}
+
+        // Acknowledge collision for the maintask
+        HasCollided = true;
+        CollidedObjectName = collision.gameObject.name;                                         // TO CHECK IT 
+
     }
 
     void OnCollisionExit(Collision other)
     {
         collision_modifier = 1;
         //print("No longer in contact with " + other.transform.name);
+
+        // Acknowledge collision for the maintask
+        HasCollided = false;
+
+        // Reset collision time
+        CollisionTime = 0f;
     }
 
     public void fix_collision_mod()
@@ -66,6 +82,12 @@ public class Movement : MonoBehaviour
 
     void FixedUpdate()
     {
+        // Increase collision time
+        if (HasCollided)
+        {
+            CollisionTime += Time.deltaTime;
+        }
+
         arduX = x_inversion * Exp.GetComponent<Ardu>().ax1;
         arduY = y_inversion * Exp.GetComponent<Ardu>().ax2;
  

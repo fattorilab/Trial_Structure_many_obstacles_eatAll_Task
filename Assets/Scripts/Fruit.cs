@@ -27,6 +27,7 @@ public class Fruit : MonoBehaviour
 
     float min_distance = 0;
     float min_time2get_reward = 0;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -34,10 +35,8 @@ public class Fruit : MonoBehaviour
         player = GameObject.Find("Player");
         experiment = GameObject.Find("Experiment");
 
-
         min_distance = experiment.GetComponent<MainTask>().minimumDistance;
         min_time2get_reward = experiment.GetComponent<MainTask>().minimumRewardTime;
-
         
         beginTimeJuicy = Time.time;
 
@@ -101,7 +100,7 @@ public class Fruit : MonoBehaviour
                     //                                        transform.eulerAngles.y, "ObviouslyWrongFruitTrigger");
 
                     obviously_wrong_but_possible = false;
-                    experiment.GetComponent<MainTask>().phase = 98;
+                    // experiment.GetComponent<MainTask>().phase = 98;                                                                                                                                          %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 }
             }
             else if (chosen)
@@ -154,7 +153,7 @@ public class Fruit : MonoBehaviour
 
 
                 //if released for nullpositionTime
-                nulltime = (float)experiment.GetComponent<MainTask>().nullpositionTime / 1000;
+                // nulltime = (float)experiment.GetComponent<MainTask>().nullpositionTime / 1000;                                                                                      %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 if ((Time.time - releasetime) > nulltime && !eaten)
                 {
                     GetComponent<Renderer>().material = eaten_mat;
@@ -168,18 +167,19 @@ public class Fruit : MonoBehaviour
                         //                                        transform.position.z,
                         //                                        transform.eulerAngles.y, "FruitTrigger");
                         juicy = false;
-                        experiment.GetComponent<Ardu>().SendReward(experiment.GetComponent<MainTask>().reward_length);
+                        experiment.GetComponent<Ardu>().SendReward(experiment.GetComponent<MainTask>().RewardLength);
 
                         if (multiple_fruit_mode)
                         {
                             player.GetComponent<Movement>().is_eating = false;
-                            experiment.GetComponent<MainTask>().fruit_eaten_notification();
-                        } else
-                        {
-                            experiment.GetComponent<MainTask>().phase = 99;
+                            // experiment.GetComponent<MainTask>().fruit_eaten_notification();                                                                                          %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                         }
-                        
-                        
+                        else
+                        {
+                            // experiment.GetComponent<MainTask>().phase = 99;                                                                                                      %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        }
+
+
                     } else if (fake_juicy)
                     {
                         //experiment.GetComponent<Saver>().addObject(transform.name,                                                                                                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -187,9 +187,9 @@ public class Fruit : MonoBehaviour
                         //                                        transform.position.z,
                         //                                        transform.eulerAngles.y, "WrongFruitTrigger");
                         fake_juicy = false;
-                        experiment.GetComponent<MainTask>().phase = 98;
+                        // experiment.GetComponent<MainTask>().phase = 98;                                                                                                              %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     }
-                    
+
 
                     releasetime = -1;
                 }
