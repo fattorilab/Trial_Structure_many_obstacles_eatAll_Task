@@ -29,6 +29,7 @@ public class MainTask : MonoBehaviour
     private bool PupilDataConnessionStatus;
 
     // Game
+    Rigidbody player_rb;
     [HideInInspector] GameObject environment;
     [HideInInspector] GameObject experiment;
     [HideInInspector] GameObject player;
@@ -60,7 +61,7 @@ public class MainTask : MonoBehaviour
     public int trials_win;
     public int trials_lose;
     public int[] trials_for_target;
-    public int trials_for_cond;
+    public int trials_for_cond = 1;
     // Conditions
     private int randomIndex;
     public List<int> condition_list;
@@ -76,7 +77,6 @@ public class MainTask : MonoBehaviour
     public List<Vector3> target_positions = new List<Vector3>();
     GameObject[] targets;
     public GameObject TargetPrefab; 
-    public Vector3 TargetSize;
     public Vector3 CorrectTargetCurrentPosition;
 
     #region Materials
@@ -99,12 +99,13 @@ public class MainTask : MonoBehaviour
     private List<int> DELAY_timing_list;
     private List<int> RT_timing_list;
 
+    private float BASELINE_duration = 2f; //   FIXED OR NO?????
+    private float INTERTRIAL_duration = 2f;          //  FIXED OR NO?????
     private float FREE_duration;
     private float DELAY_duration;
-    private float RT_duration;
-    private float MOVEMENT_maxduration; // ADDED BY EDO TO MANAGE MOVEMENT STATE (i.e. case 4)          FIXED OR NO?????
-    private float second_RT_duration; // ADDED BY EDO TO MANAGE 2ND RT STATE (i.e. case 5)            FIXED OR NO?????
-
+    private float RT_maxduration;
+    private float MOVEMENT_maxduration = 6f; // ADDED BY EDO TO MANAGE MOVEMENT STATE (i.e. case 4)          FIXED OR NO?????
+    private float second_RT_maxduration = 2f; // ADDED BY EDO TO MANAGE 2ND RT STATE (i.e. case 5)            FIXED OR NO?????
 
     [Header("Arduino Info")]
     public Ardu ardu;
@@ -124,7 +125,6 @@ public class MainTask : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-
         // Setup
         UnityEngine.Random.InitState(seed);
         System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
@@ -132,7 +132,7 @@ public class MainTask : MonoBehaviour
         first_frame = true;
 
         // States
-        current_state = 0;
+        current_state = -1;
         last_state = -1;
         error_state = "";
 
@@ -144,6 +144,7 @@ public class MainTask : MonoBehaviour
         // GameObjects
         ardu = GetComponent<Ardu>(); 
         player = GameObject.Find("Player");
+        player_rb = player.GetComponent<Rigidbody>();
         experiment = GameObject.Find("Experiment");
         environment = GameObject.Find("Environment");
 
@@ -167,6 +168,9 @@ public class MainTask : MonoBehaviour
         // Define number of trials per each target
         trials_for_target = new int[target_positions.Count];
 
+
+
+
         // Save target settings (????)
         GetComponent<Saver>().addObject("Target_Setting: Custom", "Setting", 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
@@ -175,6 +179,8 @@ public class MainTask : MonoBehaviour
         FREE_timing_list = CreateRandomSequence(FREE_timing.Length, trials_for_cond * target_positions.Count);
         DELAY_timing_list = CreateRandomSequence(DELAY_timing.Length, trials_for_cond * target_positions.Count);
         RT_timing_list = CreateRandomSequence(RT_timing.Length, trials_for_cond * target_positions.Count);
+        // 2nd RT
+        // 
 
     }
 
@@ -198,9 +204,12 @@ public class MainTask : MonoBehaviour
         */
         #endregion
 
+        /*
         #region Check with Ardu if player is moving
         arduX = ardu.ax1;   //note: if arduino is not connected (or not working) the arduX,Y = NaN;
         arduY = ardu.ax2;
+
+        isMoving = player.GetComponent<Movement>().keypressed;
 
         if ((!float.IsNaN(arduX) && arduX != 0) || (!float.IsNaN(arduY) && arduY != 0) || Input.GetAxis("Vertical") != 0 || Input.GetAxis("Horizontal") != 0)
         {
@@ -211,7 +220,7 @@ public class MainTask : MonoBehaviour
             isMoving = false;
         }
         #endregion
-
+        */
 
         // Start on first operating frame
         if (first_frame) 
@@ -224,9 +233,12 @@ public class MainTask : MonoBehaviour
             first_frame = false;
         }
 
+        // Check if the player is moving the joystick
+        isMoving = player.GetComponent<Movement>().keypressed;
+
 
         #region StateMachine
- 
+
         switch (current_state)
         {
             case -1: // INTERTRIAL
@@ -235,12 +247,15 @@ public class MainTask : MonoBehaviour
 
                 if (last_state != current_state)
                 {
+                    Debug.Log($"Current state: {current_state}");
+
                     current_condition = -1;
 
                     //Beginning routine
                     lastevent = Time.time;
                     last_state = current_state;
                     error_state = "";
+
                 }
                 #endregion
 
@@ -251,8 +266,13 @@ public class MainTask : MonoBehaviour
                 #endregion
 
                 #region State End (executed once upon exiting)
-                if (!isMoving)
+                if (!isMoving && ((Time.time - lastevent) > INTERTRIAL_duration))
                 {
+                    // Enable movement
+                    player.GetComponent<Movement>().restrict_backwards = 1;
+                    player.GetComponent<Movement>().restrict_forwards = 1;
+                    player.GetComponent<Movement>().restrict_horizontal = 1;
+
                     // Move to state 0
                     current_state = 0;
 
@@ -261,12 +281,16 @@ public class MainTask : MonoBehaviour
 
                 break;
 
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
             case 0: // BASELINE
 
                 #region State Beginning (executed once upon entering)
 
                 if (last_state != current_state)
                 {
+                    Debug.Log($"Current state: {current_state}");
+
                     //Beginning routine
                     lastevent = Time.time;
                     last_state = current_state;
@@ -279,9 +303,15 @@ public class MainTask : MonoBehaviour
                 #endregion
 
                 #region State End (executed once upon exiting)
-                if (!isMoving)
-                {   
+                if (!isMoving && ((Time.time - lastevent) > BASELINE_duration))
+                {
                     // Prepare everything for next trial
+
+                    // Change target material (neutral mat is the initial grey ball )
+                    for (int i = 0; i < targets.Length; i++)
+                    {
+                        changeTargetMaterial(targets[i], neutral_mat);      
+                    }
 
                     // Choose the correct target
                     current_condition = condition_list[0];
@@ -290,7 +320,7 @@ public class MainTask : MonoBehaviour
                     // Picking first time from the timing list to select epoch durations in this trial
                     FREE_duration = FREE_timing[FREE_timing_list[0]];
                     DELAY_duration = DELAY_timing[DELAY_timing_list[0]];
-                    RT_duration = RT_timing[RT_timing_list[0]];
+                    RT_maxduration = RT_timing[RT_timing_list[0]];
 
                     // Move to state 1
                     current_state = 1;
@@ -310,6 +340,8 @@ public class MainTask : MonoBehaviour
                 #region State Beginning
                 if (last_state != current_state) 
                 {
+                    Debug.Log($"Current state: {current_state}");
+
                     // Enable targets
                     showTargets(targets);
 
@@ -345,10 +377,12 @@ public class MainTask : MonoBehaviour
                 #region State Beginning
                 if (last_state != current_state)
                 {
-                    // Change target material
+                    Debug.Log($"Current state: {current_state}");
+
+                    // Change target material (chosen mat is ball with green dot)
                     for (int i = 0; i < targets.Length; i++)
                     {
-                        changeTargetMaterial(targets[i], chosen_mat);       // Chosen mat is ball with green dot
+                        changeTargetMaterial(targets[i], chosen_mat);       
                     }
 
                     // Beginning routine
@@ -383,10 +417,12 @@ public class MainTask : MonoBehaviour
                 #region State Beginning
                 if (last_state != current_state)
                 {
-                    // Change target material
+                    Debug.Log($"Current state: {current_state}");
+
+                    // Change target material (prejuicy mat is ball with red dot)
                     for (int i = 0; i < targets.Length; i++)
                     {
-                        changeTargetMaterial(targets[i], prejuicy_mat);     // Prejuicy mat is ball with red dot
+                        changeTargetMaterial(targets[i], prejuicy_mat);
                     }
 
                     //Beginning routine
@@ -404,7 +440,7 @@ public class MainTask : MonoBehaviour
                 #endregion
 
                 #region State End
-                if ((Time.time - lastevent) >= RT_duration && !isMoving)
+                if ((Time.time - lastevent) >= RT_maxduration && !isMoving)
                 {
                     error_state = "ERR: Not Moving in RT";
                     current_state = -99;
@@ -420,6 +456,8 @@ public class MainTask : MonoBehaviour
                 #region State Beginning
                 if (last_state != current_state)
                 {
+                    Debug.Log($"Current state: {current_state}");
+
                     //Beginning routine
                     lastevent = Time.time;
                     last_state = current_state;
@@ -430,10 +468,10 @@ public class MainTask : MonoBehaviour
                 #region State Body
                 if (player.GetComponent<Movement>().HasCollided) // If collision happened
                 {
-                    // Change target material
+                    // Change target material (juicy mat is grey ball)
                     for (int i = 0; i < targets.Length; i++)
                     {
-                        changeTargetMaterial(targets[i], juicy_mat); // Juicy mat is grey ball
+                        changeTargetMaterial(targets[i], juicy_mat);
                     }
 
                     current_state = 5;
@@ -457,6 +495,7 @@ public class MainTask : MonoBehaviour
                 #region State Beginning
                 if (last_state != current_state)
                 {
+                    Debug.Log($"Current state: {current_state}");
 
                     //Beginning routine
                     lastevent = Time.time;
@@ -467,12 +506,12 @@ public class MainTask : MonoBehaviour
 
                 #region State Body
                 // MEF is static and in collision for the duration of second RT
-                if (player.GetComponent<Movement>().CollisionTime > second_RT_duration && !isMoving)             // MONKEY NEEDS TO STAY PUT?????
+                if (player.GetComponent<Movement>().CollisionTime >= second_RT_maxduration && !isMoving)
                 {
-                    // Change target material
+                    // Change target material (eaten mat is white ball)
                     for (int i = 0; i < targets.Length; i++)
                     {
-                        changeTargetMaterial(targets[i], eaten_mat); // Eaten mat is white ball
+                        changeTargetMaterial(targets[i], eaten_mat);
                     }
 
                     current_state = 99;
@@ -480,7 +519,8 @@ public class MainTask : MonoBehaviour
                 #endregion
 
                 #region State End
-                if (player.GetComponent<Movement>().CollisionTime <= second_RT_duration)
+                // If player exits the collision (i.e. contact time lower than reaction time)
+                if (!player.GetComponent<Movement>().HasCollided)
                 {
                     error_state = "ERR: Moved too early in 2nd RT";
                     current_state = -99;
@@ -494,11 +534,11 @@ public class MainTask : MonoBehaviour
             case -99: //ERROR
 
                 #region State Beginning
-                if (last_state != current_state) //StateBeginning
+                if (last_state != current_state)
                 {
+                    Debug.Log($"Current state: {current_state}");
                     Debug.Log(error_state);
-                    identifier = "Dummy for debugging";
-                    GetComponent<Saver>().addObjectEnd(identifier);
+
                     reset_lose();
 
                     //Beginning routine
@@ -514,7 +554,7 @@ public class MainTask : MonoBehaviour
                 #region State End
                 if (true)
                 {
-                    current_state = 0;
+                    current_state = -1;
                     error_state = "";
                 }
                 #endregion
@@ -528,9 +568,11 @@ public class MainTask : MonoBehaviour
                 #region State Beginning
                 if (last_state != current_state)
                 {
-                    Debug.Log("TRIAL DONE");
-                    identifier = "Dummy for debugging";
-                    GetComponent<Saver>().addObjectEnd(identifier);
+
+                    //Debug.Log("TRIAL DONE");
+                    //identifier = "Dummy for debugging";
+                    //GetComponent<Saver>().addObjectEnd(identifier);
+
                     reset_win();
 
                     //Beginning routine
@@ -547,9 +589,9 @@ public class MainTask : MonoBehaviour
                 #endregion
 
                 #region State End
-                if (true)
+                if ((Time.time - lastevent) == RewardLength)
                 {
-                    current_state = 0;
+                    current_state = -1;
                 }
                 #endregion
 
@@ -589,17 +631,13 @@ public class MainTask : MonoBehaviour
     void reset_win()
     {
         // Disable targets
-        for (int i = 0; i < targets.Length; i++)
-        {
-            targets[i].GetComponent<Renderer>().enabled = false;
-        }
+        hideTargets(targets);
 
         // Send reward
         ardu.SendReward(RewardLength);
 
-        // Reset states
-        current_state = 0;
-        lastevent = Time.time;
+        // Reset position
+        reset_position();
 
         // Count trial
         trials_win++;
@@ -615,19 +653,30 @@ public class MainTask : MonoBehaviour
     void reset_lose()
     {
         // Disable targets
-        for (int i = 0; i < targets.Length; i++)
-        {
-            targets[i].GetComponent<Renderer>().enabled = false;
-        }
+        hideTargets(targets);
 
+        // Reset position
+        reset_position();
+
+        // Reset conditions
         condition_list = SwapVector(condition_list);
         FREE_timing_list = SwapVector(FREE_timing_list); //not strictly necessary, but better for coherence...
         DELAY_timing_list = SwapVector(DELAY_timing_list);
         RT_timing_list = SwapVector(RT_timing_list);
 
-        current_state = 0;
-        lastevent = Time.time;
         trials_lose++;
+    }
+
+    void reset_position()
+    {
+        // Move rigidbody back to initial position
+        player_rb.position = Vector3.zero;
+        player_rb.rotation = Quaternion.identity;
+
+        // Disable player movement 
+        player.GetComponent<Movement>().restrict_backwards = 0;
+        player.GetComponent<Movement>().restrict_forwards = 0;
+        player.GetComponent<Movement>().restrict_horizontal = 0;
     }
 
     #endregion
@@ -671,7 +720,7 @@ public class MainTask : MonoBehaviour
 
         FREE_duration = FREE_timing[randomIndex_FREE];
         DELAY_duration = DELAY_timing[randomIndex_DELAY];
-        RT_duration = RT_timing[randomIndex_RT];
+        RT_maxduration = RT_timing[randomIndex_RT];
 
     }
 
@@ -724,22 +773,20 @@ public class MainTask : MonoBehaviour
 
         // Import targets coordinates from csv file into target_positions list
         LoadPositionsFromCSV(target_positions);
-        Debug.Log($"Target positioned as: {target_positions}");
-
+       
         // Instantiate targets (switched off)
         targets = new GameObject[target_positions.Count];
         for (int i = 0; i < targets.Length; i++)
         {
             // Instantiate
-            targets[i] = Instantiate(TargetPrefab, target_positions[i], TargetPrefab.transform.rotation, environment.transform); // Quaternion.Euler(0, 0, 0), environment.transform);
+            targets[i] = Instantiate(TargetPrefab, target_positions[i], Quaternion.Euler(0, 0, 0), environment.transform); // TargetPrefab.transform.rotation , environment.transform);
             targets[i].name = $"{TargetPrefab.name}_" + i.ToString();
-            targets[i].transform.localScale = TargetSize;
 
             // Disable (make invisible)
-            targets[i].GetComponent<Renderer>().enabled = false;
+            targets[i].GetComponent<MeshRenderer>().enabled = false;
 
             // Add target to data to be saved
-            identifier = "Target" + current_condition.ToString();
+            identifier = targets[i].GetInstanceID().ToString();
 
             GetComponent<Saver>().addObject(identifier,
                 "Target", // target_positions[i].x, target_positions[i].z, 0, "Position");
@@ -749,9 +796,9 @@ public class MainTask : MonoBehaviour
                 TargetPrefab.transform.rotation[0],
                 TargetPrefab.transform.rotation[1],
                 TargetPrefab.transform.rotation[2],
-                TargetSize[0],
-                TargetSize[1],
-                TargetSize[2]
+                targets[i].transform.localScale[0],
+                targets[i].transform.localScale[1],
+                targets[i].transform.localScale[2]
                 );
         }
     }
@@ -762,7 +809,7 @@ public class MainTask : MonoBehaviour
         for (int i = 0; i < targets.Length; i++)
         {
             // Enable (make visible)
-            targets[i].GetComponent<Renderer>().enabled = true;
+            targets[i].GetComponent<MeshRenderer>().enabled = true;
         }
     }
 
@@ -772,13 +819,13 @@ public class MainTask : MonoBehaviour
         for (int i = 0; i < targets.Length; i++)
         {
             // Disable (make invisible)
-            targets[i].GetComponent<Renderer>().enabled = false;
+            targets[i].GetComponent<MeshRenderer>().enabled = false;
         }
     }
 
     private void changeTargetMaterial(GameObject target, Material mat)
     {
-        target.GetComponent<Renderer>().material = mat;
+        target.GetComponent<MeshRenderer>().material = mat;
     }
 
     #endregion

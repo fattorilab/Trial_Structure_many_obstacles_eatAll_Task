@@ -164,7 +164,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7803970846313583056}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe2da4293a27c4b42b589a71e2116180, type: 3}
   m_Name: 
@@ -185,5 +185,3 @@ MonoBehaviour:
   prejuicy_mat: {fileID: 2100000, guid: 3a42063aa29caf3428d6dcfa8d4c62a2, type: 2}
   juicy_mat: {fileID: 2100000, guid: ceb5d8103c46f504488a03ce57193689, type: 2}
   eaten_mat: {fileID: 2100000, guid: 5b6d35cbaeefa3d439ba82a928056bac, type: 2}
-  playerAngle: 90
-  timeJuicy: 0

@@ -10,8 +10,8 @@ public class Movement : MonoBehaviour
 
     //public bool centerRotationLaterally;
     //public float maximumAngleToTarget;
-    public float restrict_horizontal;
-    public float restrict_backwards;
+    public float restrict_horizontal = 1;
+    public float restrict_backwards = 1;
     public float restrict_forwards = 1;
     public bool keypressed = false;
     
@@ -30,8 +30,6 @@ public class Movement : MonoBehaviour
     int y_inversion = 1;
 
     Rigidbody rb;
-
-    float collision_modifier = 1;
     GameObject target;
 
     // MANAGE COLLISIONS
@@ -54,9 +52,6 @@ public class Movement : MonoBehaviour
     
     void OnCollisionEnter(Collision collision)
     {
-        collision_modifier = 0.5f;
-        //if (collision.gameObject.name == "YourWallName") { rigidbody.velocity = Vector3.zero;}
-
         // Acknowledge collision for the maintask
         HasCollided = true;
         CollidedObjectName = collision.gameObject.name;                                         // TO CHECK IT 
@@ -65,19 +60,11 @@ public class Movement : MonoBehaviour
 
     void OnCollisionExit(Collision other)
     {
-        collision_modifier = 1;
-        //print("No longer in contact with " + other.transform.name);
-
         // Acknowledge collision for the maintask
         HasCollided = false;
 
         // Reset collision time
         CollisionTime = 0f;
-    }
-
-    public void fix_collision_mod()
-    {
-        collision_modifier = 1;
     }
 
     void FixedUpdate()
@@ -102,20 +89,17 @@ public class Movement : MonoBehaviour
             CamRotation.y += (arduX / 512f) * Time.deltaTime * restrict_horizontal * 40 * speed;
             //CamRotation.y += (arduX / 512f) * restrict_horizontal * speed * 3;
 
-
             transform.localEulerAngles = CamRotation;
-
-
 
             if (Input.GetAxis("Vertical") > 0 || arduY > 0) //
             {
                 Vector3 moveVector = ((transform.rotation * Camera.main.transform.localRotation) * Vector3.forward * Input.GetAxis("Vertical") * 4) + ((transform.rotation * Camera.main.transform.localRotation) * Vector3.forward * (arduY / 512f) * 4);
-                rb.MovePosition(transform.position + Vector3.Normalize(moveVector) * speed * restrict_forwards * collision_modifier * Time.deltaTime);
+                rb.MovePosition(transform.position + Vector3.Normalize(moveVector) * speed * restrict_forwards * Time.deltaTime);
             }
             else //if (Input.GetAxis("Vertical") < 0 || arduY < 0)
             {
                 Vector3 moveVector = ((transform.rotation * Camera.main.transform.localRotation) * Vector3.forward * Input.GetAxis("Vertical") * 4) + ((transform.rotation * Camera.main.transform.localRotation) * Vector3.forward * (arduY / 512f) * 4);
-                rb.MovePosition(transform.position + Vector3.Normalize(moveVector) * speed * restrict_backwards * collision_modifier * Time.deltaTime); // if backwards is restricted (0),everything is set to 0
+                rb.MovePosition(transform.position + Vector3.Normalize(moveVector) * speed * restrict_backwards * Time.deltaTime); // if backwards is restricted (0),everything is set to 0
             }
 
 

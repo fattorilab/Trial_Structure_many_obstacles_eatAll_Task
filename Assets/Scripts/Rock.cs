@@ -17,7 +17,7 @@ public class Rock : MonoBehaviour
         {
             experiment.GetComponent<Saver>().addObject(transform.tag, "TouchedARock",
                                                     transform.position.x, transform.position.y, transform.position.z,
-                                                    transform.rotation.x, transform.rotation.y, transform.rotation.z,
+                                                    transform.eulerAngles.x, transform.eulerAngles.y, transform.eulerAngles.z,
                                                     transform.localScale.x, transform.localScale.y, transform.localScale.z); // transform.eulerAngles.y
 
             // Do something upon contact

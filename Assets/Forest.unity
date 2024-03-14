@@ -718,7 +718,7 @@ Transform:
   m_GameObject: {fileID: 705507993}
   serializedVersion: 2
   m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
-  m_LocalPosition: {x: 0, y: 3, z: 0}
+  m_LocalPosition: {x: 0.31, y: 2.92, z: -0.54}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -971,7 +971,6 @@ GameObject:
   - component: {fileID: 1239289645}
   - component: {fileID: 1239289644}
   - component: {fileID: 1239289646}
-  - component: {fileID: 1239289647}
   m_Layer: 0
   m_Name: Experiment
   m_TagString: Untagged
@@ -1033,23 +1032,22 @@ MonoBehaviour:
   seed: 1
   starttime: 0
   frame_number: 0
-  RewardLength: 50
+  RewardLength: 10
   reward_counter: 0
   minimumRewardTime: 200
   minimumDistance: 2
-  file_name_positions: custom_positions
+  file_name_positions: custom_test
   current_state: 0
   error_state: 0
   current_trial: 0
   trials_win: 0
   trials_lose: 0
   trials_for_target: 
-  trials_for_cond: 0
+  trials_for_cond: 5
   condition_list: 
   current_condition: 0
   target_positions: []
   TargetPrefab: {fileID: 7803970846313583056, guid: 69ab4cefa3c3a7347a697075b8b2e78e, type: 3}
-  TargetSize: {x: 0, y: 0, z: 0}
   CorrectTargetCurrentPosition: {x: 0, y: 0, z: 0}
   neutral_mat: {fileID: 2100000, guid: 2aedcb3bbffb74445b2c0bff17464dcb, type: 2}
   red_mat: {fileID: 2100000, guid: d831a1238a330a4478afbf69681c2b89, type: 2}
@@ -1058,17 +1056,11 @@ MonoBehaviour:
   juicy_mat: {fileID: 2100000, guid: ceb5d8103c46f504488a03ce57193689, type: 2}
   eaten_mat: {fileID: 2100000, guid: 5b6d35cbaeefa3d439ba82a928056bac, type: 2}
   FREE_timing:
-  - 0.3
-  - 0.6
-  - 0.9
+  - 5
   DELAY_timing:
-  - 0.3
-  - 0.6
-  - 0.9
+  - 5
   RT_timing:
-  - 0.3
-  - 0.6
-  - 0.9
+  - 5
   ardu: {fileID: 0}
   arduX: 0
   arduY: 0
@@ -1094,20 +1086,6 @@ MonoBehaviour:
   ax1: 0
   ax2: 0
   reward_counter: 0
---- !u!114 &1239289647
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1239289640}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c270164ca0ac5a24b86673bfdf1b22cd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  filename: custom_positions_2palle
-  balls_from_csv: []
 --- !u!1 &1271873898
 GameObject:
   m_ObjectHideFlags: 0
@@ -1919,7 +1897,7 @@ Transform:
   m_GameObject: {fileID: 1913868725626146597}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.25, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
