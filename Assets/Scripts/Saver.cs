@@ -44,7 +44,7 @@ public class Saver : MonoBehaviour
     GameObject DB;
     GameObject player;
     GameObject experiment;
-    public GameObject PupilData;
+    [HideInInspector] public GameObject PupilData;
     PupilDataStream PupilDataStream;
     #endregion
 
@@ -103,6 +103,7 @@ public class Saver : MonoBehaviour
 
         // Seed
         addObject("Seed", "Seed", main.seed, main.seed, main.seed, main.seed, main.seed, main.seed, main.seed, main.seed, main.seed);
+
     }
 
     void LateUpdate()
@@ -184,8 +185,13 @@ public class Saver : MonoBehaviour
 
         // Frames and time
         long milliseconds = System.DateTimeOffset.Now.ToUnixTimeMilliseconds();
-        if (main.starttime == 0) { main.starttime = milliseconds; }
-        PerFrameData[(PerFrameData.Count - 1)].Add((milliseconds - main.starttime).ToString());
+
+        if (main != null)
+        {
+            if (main.starttime == 0) { main.starttime = milliseconds; starttime = main.starttime; }
+        }
+
+        PerFrameData[(PerFrameData.Count - 1)].Add((milliseconds - starttime).ToString());
         PerFrameData[(PerFrameData.Count - 1)].Add((main.frame_number).ToString());
         // Trials
         PerFrameData[(PerFrameData.Count - 1)].Add((main.current_trial).ToString("F5"));
@@ -230,7 +236,11 @@ public class Saver : MonoBehaviour
                                  float x_scale, float y_scale, float z_scale)
     {
         long milliseconds = System.DateTimeOffset.Now.ToUnixTimeMilliseconds();
-        if (main.starttime == 0) { main.starttime = milliseconds; }
+
+        if (main != null)
+        {
+            if (main.starttime == 0) { main.starttime = milliseconds; starttime = main.starttime; }
+        }
 
         SupplementData.Add(new List<string>()); //Adds new sub List
         SupplementData[(SupplementData.Count - 1)].Add(identifier);
@@ -244,7 +254,7 @@ public class Saver : MonoBehaviour
         SupplementData[(SupplementData.Count - 1)].Add((x_scale).ToString("F5"));
         SupplementData[(SupplementData.Count - 1)].Add((y_scale).ToString("F5"));
         SupplementData[(SupplementData.Count - 1)].Add((z_scale).ToString("F5"));
-        SupplementData[(SupplementData.Count - 1)].Add((milliseconds - main.starttime).ToString());
+        SupplementData[(SupplementData.Count - 1)].Add((milliseconds - starttime).ToString());
         SupplementData[(SupplementData.Count - 1)].Add("-1");
     }
 
