@@ -35,7 +35,7 @@ public class Movement : MonoBehaviour
     // MANAGE COLLISIONS
     public bool HasCollided = false;
     public float CollisionTime = 0f;
-    public string CollidedObjectName = "";
+    public GameObject CollidedObject;
 
     // Start is called before the first frame update
     void Start()
@@ -54,7 +54,7 @@ public class Movement : MonoBehaviour
     {
         // Acknowledge collision for the maintask
         HasCollided = true;
-        CollidedObjectName = collision.gameObject.name;                                         // TO CHECK IT 
+        CollidedObject = collision.gameObject;
 
     }
 

@@ -105,7 +105,7 @@ public class MainTask : MonoBehaviour
     private float DELAY_duration;
     private float RT_maxduration;
     private float MOVEMENT_maxduration = 6f; // ADDED BY EDO TO MANAGE MOVEMENT STATE (i.e. case 4)          FIXED OR NO?????
-    private float second_RT_maxduration = 2f; // ADDED BY EDO TO MANAGE 2ND RT STATE (i.e. case 5)            FIXED OR NO?????
+    private float second_RT_maxduration = 5f; // ADDED BY EDO TO MANAGE 2ND RT STATE (i.e. case 5)            FIXED OR NO?????
 
     [Header("Arduino Info")]
     public Ardu ardu;
@@ -167,9 +167,6 @@ public class MainTask : MonoBehaviour
 
         // Define number of trials per each target
         trials_for_target = new int[target_positions.Count];
-
-
-
 
         // Save target settings (????)
         GetComponent<Saver>().addObject("Target_Setting: Custom", "Setting", 0, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -382,7 +379,11 @@ public class MainTask : MonoBehaviour
                     // Change target material (chosen mat is ball with green dot)
                     for (int i = 0; i < targets.Length; i++)
                     {
-                        changeTargetMaterial(targets[i], chosen_mat);       
+                        if (targets[i].transform.position == CorrectTargetCurrentPosition)
+                        {
+                            changeTargetMaterial(targets[i], chosen_mat);
+                        }
+                       
                     }
 
                     // Beginning routine
@@ -422,7 +423,10 @@ public class MainTask : MonoBehaviour
                     // Change target material (prejuicy mat is ball with red dot)
                     for (int i = 0; i < targets.Length; i++)
                     {
-                        changeTargetMaterial(targets[i], prejuicy_mat);
+                        if (targets[i].transform.position == CorrectTargetCurrentPosition)
+                        {
+                            changeTargetMaterial(targets[i], prejuicy_mat);
+                        }
                     }
 
                     //Beginning routine
@@ -471,7 +475,10 @@ public class MainTask : MonoBehaviour
                     // Change target material (juicy mat is grey ball)
                     for (int i = 0; i < targets.Length; i++)
                     {
-                        changeTargetMaterial(targets[i], juicy_mat);
+                        if (targets[i].name == player.GetComponent<Movement>().CollidedObject.name)
+                        {
+                            changeTargetMaterial(targets[i], juicy_mat);
+                        }
                     }
 
                     current_state = 5;
@@ -506,16 +513,31 @@ public class MainTask : MonoBehaviour
 
                 #region State Body
                 // MEF is static and in collision for the duration of second RT
-                if (player.GetComponent<Movement>().CollisionTime >= second_RT_maxduration && !isMoving)
+                if ((player.GetComponent<Movement>().CollisionTime > second_RT_maxduration) && !isMoving)
                 {
+
                     // Change target material (eaten mat is white ball)
                     for (int i = 0; i < targets.Length; i++)
                     {
-                        changeTargetMaterial(targets[i], eaten_mat);
+                        if (targets[i].name == player.GetComponent<Movement>().CollidedObject.name)
+                        {
+                            changeTargetMaterial(targets[i], eaten_mat);
+                        }
                     }
 
-                    current_state = 99;
+                    // Check if collided object is the correct one
+                    if (player.GetComponent<Movement>().CollidedObject.transform.position == CorrectTargetCurrentPosition)
+                    {
+                        current_state = 99;
+                    }
+                    else
+                    {
+                        error_state = $"ERR: Selected target at {player.GetComponent<Movement>().CollidedObject.transform.position} but correct position: {CorrectTargetCurrentPosition}";
+                        current_state = -99;
+                    }
+
                 }
+
                 #endregion
 
                 #region State End
@@ -569,9 +591,8 @@ public class MainTask : MonoBehaviour
                 if (last_state != current_state)
                 {
 
-                    //Debug.Log("TRIAL DONE");
-                    //identifier = "Dummy for debugging";
-                    //GetComponent<Saver>().addObjectEnd(identifier);
+                    Debug.Log("TRIAL DONE");
+                    GetComponent<Saver>().addObjectEnd(player.GetComponent<Movement>().CollidedObject.name);
 
                     reset_win();
 
@@ -786,10 +807,8 @@ public class MainTask : MonoBehaviour
             targets[i].GetComponent<MeshRenderer>().enabled = false;
 
             // Add target to data to be saved
-            identifier = targets[i].GetInstanceID().ToString();
-
-            GetComponent<Saver>().addObject(identifier,
-                "Target", // target_positions[i].x, target_positions[i].z, 0, "Position");
+            GetComponent<Saver>().addObject(targets[i].name,
+                "Target",
                 targets[i].transform.position.x,
                 targets[i].transform.position.y,
                 targets[i].transform.position.z,
