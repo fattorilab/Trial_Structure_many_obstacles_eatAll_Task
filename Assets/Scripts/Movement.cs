@@ -8,17 +8,13 @@ public class Movement : MonoBehaviour
     public bool reverse_Xaxis;
     public bool reverse_Yaxis;
 
-    //public bool centerRotationLaterally;
-    //public float maximumAngleToTarget;
     public float restrict_horizontal = 1;
     public float restrict_backwards = 1;
     public float restrict_forwards = 1;
-    public bool keypressed = false;
-    
-    public float presstime = 0;
-    public GameObject Exp;
+    [System.NonSerialized] public bool keypressed = false;
 
-    public bool is_eating = false;
+    private float presstime = 0;
+    GameObject Exp;
 
     Vector3 CamPosition;
     Vector3 CamRotation;
@@ -33,9 +29,9 @@ public class Movement : MonoBehaviour
     GameObject target;
 
     // MANAGE COLLISIONS
-    public bool HasCollided = false;
-    public float CollisionTime = 0f;
-    public GameObject CollidedObject;
+    [System.NonSerialized] public bool HasCollided = false;
+    [System.NonSerialized] public float CollisionTime = 0f;
+    [System.NonSerialized] public GameObject CollidedObject;
 
     // Start is called before the first frame update
     void Start()
@@ -44,9 +40,8 @@ public class Movement : MonoBehaviour
         if (reverse_Xaxis) { x_inversion = -1; }
         if (reverse_Yaxis) { y_inversion = -1; }
         rb = GetComponent<Rigidbody>();
-        //rb.mass = 2;
         target = GameObject.Find("Target");
-        //experiment = GameObject.Find("Experiment");
+        Exp = GameObject.Find("Experiment");
     }
 
     
@@ -77,7 +72,18 @@ public class Movement : MonoBehaviour
 
         arduX = x_inversion * Exp.GetComponent<Ardu>().ax1;
         arduY = y_inversion * Exp.GetComponent<Ardu>().ax2;
- 
+
+        // Initialize vars to reassign ardu vars in case they are NaN
+        var arduX_notNaN = arduX;
+        var arduY_notNaN = arduY;
+
+        // Set ardu vars to 0 to do operations because NaN is "Not a Number"
+        if (float.IsNaN(arduX) && float.IsNaN(arduY))
+        {
+            arduX_notNaN = (int)0;
+            arduY_notNaN = (int)0;
+        }
+
         if (Input.anyKey || arduX != 0 || arduY != 0)
         {
             keypressed = true;
@@ -86,22 +92,20 @@ public class Movement : MonoBehaviour
             CamRotation = transform.localEulerAngles;
             CamRotation.y += Input.GetAxis("Horizontal") * Time.deltaTime * restrict_horizontal * 40 * speed;
 
-            CamRotation.y += (arduX / 512f) * Time.deltaTime * restrict_horizontal * 40 * speed;
-            //CamRotation.y += (arduX / 512f) * restrict_horizontal * speed * 3;
+            CamRotation.y += (arduX_notNaN / 512f) * Time.deltaTime * restrict_horizontal * 40 * speed;
 
             transform.localEulerAngles = CamRotation;
 
-            if (Input.GetAxis("Vertical") > 0 || arduY > 0) //
+            Vector3 moveVector = ((transform.rotation * Camera.main.transform.localRotation) * Vector3.forward * Input.GetAxis("Vertical") * 4) + ((transform.rotation * Camera.main.transform.localRotation) * Vector3.forward * (arduY_notNaN / 512f) * 4);
+
+            if (Input.GetAxis("Vertical") > 0 || arduY_notNaN > 0) 
             {
-                Vector3 moveVector = ((transform.rotation * Camera.main.transform.localRotation) * Vector3.forward * Input.GetAxis("Vertical") * 4) + ((transform.rotation * Camera.main.transform.localRotation) * Vector3.forward * (arduY / 512f) * 4);
                 rb.MovePosition(transform.position + Vector3.Normalize(moveVector) * speed * restrict_forwards * Time.deltaTime);
             }
             else //if (Input.GetAxis("Vertical") < 0 || arduY < 0)
             {
-                Vector3 moveVector = ((transform.rotation * Camera.main.transform.localRotation) * Vector3.forward * Input.GetAxis("Vertical") * 4) + ((transform.rotation * Camera.main.transform.localRotation) * Vector3.forward * (arduY / 512f) * 4);
                 rb.MovePosition(transform.position + Vector3.Normalize(moveVector) * speed * restrict_backwards * Time.deltaTime); // if backwards is restricted (0),everything is set to 0
             }
-
 
             presstime = (Time.time - lastTimeStatic) * 1000;
         }

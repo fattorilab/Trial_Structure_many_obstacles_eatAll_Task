@@ -5,7 +5,6 @@ using UnityEngine;
 using System.Threading;
 using System.Text;
 using System.Linq;
-
  public class arduino
 {
     SerialPort sp;
@@ -16,12 +15,16 @@ using System.Linq;
     public int JSdeadzone;
     Thread thread;
     bool stopThread;
+    float lastSampleTime;
+
      public arduino(string _COM, int _COMspeed, int _JSdeadzone)
+
     {
         COMspeed = _COMspeed;
         COM = _COM;
         JSdeadzone = _JSdeadzone;
         sp = new SerialPort("\\\\.\\" + COM, COMspeed);
+        lastSampleTime = System.DateTimeOffset.Now.ToUnixTimeMilliseconds();
         if (!sp.IsOpen)
         {
             Debug.Log("Apertura " + COM + ", baud " + COMspeed);
@@ -31,6 +34,7 @@ using System.Linq;
         thread = new Thread(JoySample);
         thread.Start();
     }
+
     public void JoySample()
     {
         StringBuilder buffer = new StringBuilder();
@@ -69,15 +73,16 @@ using System.Linq;
                             xValue -= 511;
                             yValue -= 511;
 
-                            
-
                             // Add the new values to the queues
                             lastXValues.Add(xValue);
                             lastYValues.Add(yValue);
 
+                            // track the timestamp of the last sample
+                            lastSampleTime = System.DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
                         }
                     }
+
                 }
 
                 // Remove the oldest values if the queues exceed 10 elements
@@ -95,6 +100,15 @@ using System.Linq;
         Debug.Log("Chiuso Arduino");
     }
 
+    public bool isWorkingCorrectly() // return true if it's less than 1 sec since the last correct line was parsed
+    {
+        bool working = false;
+        if ((System.DateTimeOffset.Now.ToUnixTimeMilliseconds() - lastSampleTime) < 1000) 
+        {
+            working = true;
+        }
+        return working;
+    }
 
     public float getX()
     {
@@ -126,6 +140,7 @@ using System.Linq;
     {
         stopThread = true;
     }
+
      public void sendSerial(string cosa)
     {
         if (!sp.IsOpen)

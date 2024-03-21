@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Globalization;
 using UnityEngine;
+using UnityEditor;
 using PupilLabs;
 
 
@@ -19,12 +20,12 @@ public class MainTask : MonoBehaviour
     [Header("GameObjects and components")]
 
     // Cams
-    Camera camM;
-    Camera camL;
-    Camera camR;
+    [System.NonSerialized] Camera camM;
+    [System.NonSerialized] Camera camL;
+    [System.NonSerialized] Camera camR;
 
     // Pupil
-    public PupilDataStream PupilDataStreamScript;
+    [System.NonSerialized] public PupilDataStream PupilDataStreamScript;
     private RequestController RequestControllerScript;
     private bool PupilDataConnessionStatus;
 
@@ -38,7 +39,7 @@ public class MainTask : MonoBehaviour
     public string MEF;
     public string path_to_data = "C:/Users/admin/Desktop/Registrazioni_VR/";
     public bool RECORD_EYES;
-    [HideInInspector] public int lastIDFromDB;
+    [System.NonSerialized] public int lastIDFromDB;
     [HideInInspector] public int seed = 12345;
     [HideInInspector] public long starttime = 0;
     [HideInInspector] public int frame_number = 0;
@@ -53,19 +54,19 @@ public class MainTask : MonoBehaviour
     [Header("Trials Info")]
     public string file_name_positions;
     // States
-    public int current_state;
+    [System.NonSerialized] public int current_state;
     private int last_state;
-    [HideInInspector] public string error_state;
+    [System.NonSerialized] public string error_state;
     // Trials
-    public int current_trial;
+    [System.NonSerialized] public int current_trial;
     public int trials_win;
     public int trials_lose;
     public int[] trials_for_target;
     public int trials_for_cond = 1;
     // Conditions
     private int randomIndex;
-    public List<int> condition_list;
-    [HideInInspector] public int current_condition;
+    [System.NonSerialized] public List<int> condition_list;
+    [System.NonSerialized] public int current_condition;
     //
     private float lastevent;
     private string identifier;
@@ -76,17 +77,17 @@ public class MainTask : MonoBehaviour
     // List, because it is changing size during the runtime
     public List<Vector3> target_positions = new List<Vector3>();
     GameObject[] targets;
-    public GameObject TargetPrefab; 
-    public Vector3 CorrectTargetCurrentPosition;
+    [System.NonSerialized] public GameObject TargetPrefab;
+    [System.NonSerialized] public Vector3 CorrectTargetCurrentPosition;
 
     #region Materials
     [Header("Target Materials")]
-    public Material neutral_mat;
-    public Material red_mat;
-    public Material chosen_mat;
-    public Material prejuicy_mat;
-    public Material juicy_mat;
-    public Material eaten_mat;
+    [System.NonSerialized] public Material initial_grey;
+    [System.NonSerialized] public Material red;
+    [System.NonSerialized] public Material green_dot;
+    [System.NonSerialized] public Material red_dot;
+    [System.NonSerialized] public Material final_grey;
+    [System.NonSerialized] public Material white;
     #endregion
 
     [Header("Epoches Info")]
@@ -99,26 +100,25 @@ public class MainTask : MonoBehaviour
     private List<int> DELAY_timing_list;
     private List<int> RT_timing_list;
 
-    private float BASELINE_duration = 2f; //   FIXED OR NO?????
-    private float INTERTRIAL_duration = 2f;          //  FIXED OR NO?????
+    public float BASELINE_duration = 2f;
+    public float INTERTRIAL_duration = 2f;
     private float FREE_duration;
     private float DELAY_duration;
     private float RT_maxduration;
-    private float MOVEMENT_maxduration = 6f; // ADDED BY EDO TO MANAGE MOVEMENT STATE (i.e. case 4)          FIXED OR NO?????
-    private float second_RT_maxduration = 5f; // ADDED BY EDO TO MANAGE 2ND RT STATE (i.e. case 5)            FIXED OR NO?????
+    public float MOVEMENT_maxduration = 6f;
+    public float second_RT_maxduration = 2f;
 
     [Header("Arduino Info")]
-    public Ardu ardu;
-    public float arduX;
-    public float arduY;
-    //public int dead_zone;
-      
+    [System.NonSerialized] public Ardu ardu;
+    [System.NonSerialized] public float arduX;
+    [System.NonSerialized] public float arduY;
+
     [Header("PupilLab Info")]
-    public Vector2 centerRightPupilPx = new Vector2(float.NaN, float.NaN);
-    public Vector2 centerLeftPupilPx = new Vector2(float.NaN, float.NaN);
-    public float diameterRight = float.NaN;
-    public float diameterLeft = float.NaN;
-    public bool pupilconnection;
+    [System.NonSerialized] public Vector2 centerRightPupilPx = new Vector2(float.NaN, float.NaN);
+    [System.NonSerialized] public Vector2 centerLeftPupilPx = new Vector2(float.NaN, float.NaN);
+    [System.NonSerialized] public float diameterRight = float.NaN;
+    [System.NonSerialized] public float diameterLeft = float.NaN;
+    [System.NonSerialized] public bool pupilconnection;
 
     #endregion
 
@@ -132,8 +132,8 @@ public class MainTask : MonoBehaviour
         first_frame = true;
 
         // States
-        current_state = -1;
-        last_state = -1;
+        current_state = -2;
+        last_state = -2;
         error_state = "";
 
         // Trials
@@ -153,13 +153,20 @@ public class MainTask : MonoBehaviour
         camL = GameObject.Find("Left Camera").GetComponent<Camera>();
         camR = GameObject.Find("Right Camera").GetComponent<Camera>();
 
-        #region PUPIL MANAGEMENT
-        /*
+        // PupilLab
         PupilDataStreamScript = GameObject.Find("PupilDataManagment").GetComponent<PupilDataStream>();
         RequestControllerScript = GameObject.Find("PupilDataManagment").GetComponent<RequestController>();
-        RequestControllerScript.connectOnEnable = pupilconnection;
-        */
-        #endregion
+
+        // Materials
+        initial_grey = AssetDatabase.LoadAssetAtPath<Material>("Assets/Material/fruit/neutralgrey.mat");
+        red = AssetDatabase.LoadAssetAtPath<Material>("Assets/Material/fruit/red_fruit.mat");
+        green_dot = AssetDatabase.LoadAssetAtPath<Material>("Assets/Material/fruit/green_dot.mat");
+        red_dot = AssetDatabase.LoadAssetAtPath<Material>("Assets/Material/fruit/reddot.mat");
+        final_grey = AssetDatabase.LoadAssetAtPath<Material>("Assets/Material/fruit/grey_fruit.mat");
+        white = AssetDatabase.LoadAssetAtPath<Material>("Assets/Material/fruit/white_fruit.mat");
+
+        // Target Prefab
+        TargetPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Material/Fruit_Prefab.prefab");
 
         // Import targets coordinates from csv file into target_positions list
         // and initiate the targets in a disable state (i.e invisible)
@@ -168,56 +175,17 @@ public class MainTask : MonoBehaviour
         // Define number of trials per each target
         trials_for_target = new int[target_positions.Count];
 
-        // Save target settings (????)
-        GetComponent<Saver>().addObject("Target_Setting: Custom", "Setting", 0, 0, 0, 0, 0, 0, 0, 0, 0);
-
         // Generate condition and timing vectors
         condition_list = CreateRandomSequence(target_positions.Count, trials_for_cond * target_positions.Count);
         FREE_timing_list = CreateRandomSequence(FREE_timing.Length, trials_for_cond * target_positions.Count);
         DELAY_timing_list = CreateRandomSequence(DELAY_timing.Length, trials_for_cond * target_positions.Count);
         RT_timing_list = CreateRandomSequence(RT_timing.Length, trials_for_cond * target_positions.Count);
-        // 2nd RT
-        // 
 
     }
 
     void Update()
     {
         frame_number++;
-
-        #region PUPIL MANAGEMENT
-        /* serve ancora ?
-        PupilDataConnessionStatus = PupilDataStreamScript.subsCtrl.IsConnected;
-
-        if (PupilDataConnessionStatus)
-        {
-            //Debug.Log((centerRightPupilPx[0]).ToString());
-            centerRightPupilPx = PupilDataStreamScript.CenterRightPupilPx;
-            centerLeftPupilPx = PupilDataStreamScript.CenterLeftPupilPx;
-            diameterRight = PupilDataStreamScript.DiameterRight;
-            diameterLeft = PupilDataStreamScript.DiameterLeft;
-            ardu.SendPupilLabData(centerRightPupilPx[0], centerRightPupilPx[1], centerLeftPupilPx[0], centerLeftPupilPx[1]);
-        }
-        */
-        #endregion
-
-        /*
-        #region Check with Ardu if player is moving
-        arduX = ardu.ax1;   //note: if arduino is not connected (or not working) the arduX,Y = NaN;
-        arduY = ardu.ax2;
-
-        isMoving = player.GetComponent<Movement>().keypressed;
-
-        if ((!float.IsNaN(arduX) && arduX != 0) || (!float.IsNaN(arduY) && arduY != 0) || Input.GetAxis("Vertical") != 0 || Input.GetAxis("Horizontal") != 0)
-        {
-            isMoving = true;
-        }
-        else
-        {
-            isMoving = false;
-        }
-        #endregion
-        */
 
         // Start on first operating frame
         if (first_frame) 
@@ -233,11 +201,23 @@ public class MainTask : MonoBehaviour
         // Check if the player is moving the joystick
         isMoving = player.GetComponent<Movement>().keypressed;
 
-
         #region StateMachine
 
         switch (current_state)
         {
+            case -2: // TASK BEGIN
+
+                if (PupilDataStreamScript.subsCtrl.IsConnected || RequestControllerScript.ans)
+                {
+                    foreach (Camera cam in player.GetComponentsInChildren<Camera>())
+                    {
+                        cam.backgroundColor = Color.black;
+                    }
+                    current_state = -1;
+                }
+
+                break;
+
             case -1: // INTERTRIAL
 
                 #region State Beginning (executed once upon entering)
@@ -296,7 +276,11 @@ public class MainTask : MonoBehaviour
                 #endregion
 
                 #region State Body (executed every frame while in state)
-
+                // Prevent entering FREE state from a position different from initial
+                if (isMoving)
+                {
+                    reset_position();
+                }
                 #endregion
 
                 #region State End (executed once upon exiting)
@@ -307,7 +291,7 @@ public class MainTask : MonoBehaviour
                     // Change target material (neutral mat is the initial grey ball )
                     for (int i = 0; i < targets.Length; i++)
                     {
-                        changeTargetMaterial(targets[i], neutral_mat);      
+                        changeTargetMaterial(targets[i], initial_grey);      
                     }
 
                     // Choose the correct target
@@ -381,7 +365,7 @@ public class MainTask : MonoBehaviour
                     {
                         if (targets[i].transform.position == CorrectTargetCurrentPosition)
                         {
-                            changeTargetMaterial(targets[i], chosen_mat);
+                            changeTargetMaterial(targets[i], green_dot);
                         }
                        
                     }
@@ -425,7 +409,7 @@ public class MainTask : MonoBehaviour
                     {
                         if (targets[i].transform.position == CorrectTargetCurrentPosition)
                         {
-                            changeTargetMaterial(targets[i], prejuicy_mat);
+                            changeTargetMaterial(targets[i], red_dot);
                         }
                     }
 
@@ -444,7 +428,7 @@ public class MainTask : MonoBehaviour
                 #endregion
 
                 #region State End
-                if ((Time.time - lastevent) >= RT_maxduration && !isMoving)
+                if ((Time.time - lastevent) >= RT_maxduration)
                 {
                     error_state = "ERR: Not Moving in RT";
                     current_state = -99;
@@ -472,12 +456,26 @@ public class MainTask : MonoBehaviour
                 #region State Body
                 if (player.GetComponent<Movement>().HasCollided) // If collision happened
                 {
+
+                    // Check if collided object is the correct one
+                    if (player.GetComponent<Movement>().CollidedObject.transform.position == CorrectTargetCurrentPosition)
+                    {
+                        // Go to second RT
+                        current_state = 5;
+                    }
+                    else
+                    {
+                        error_state = $"ERR: Selected target at {player.GetComponent<Movement>().CollidedObject.transform.position} but correct position: {CorrectTargetCurrentPosition}";
+                        current_state = -99;
+                    }
+
+
                     // Change target material (juicy mat is grey ball)
                     for (int i = 0; i < targets.Length; i++)
                     {
                         if (targets[i].name == player.GetComponent<Movement>().CollidedObject.name)
                         {
-                            changeTargetMaterial(targets[i], juicy_mat);
+                            changeTargetMaterial(targets[i], final_grey);
                         }
                     }
 
@@ -512,41 +510,43 @@ public class MainTask : MonoBehaviour
                 #endregion
 
                 #region State Body
-                // MEF is static and in collision for the duration of second RT
-                if ((player.GetComponent<Movement>().CollisionTime > second_RT_maxduration) && !isMoving)
+                // MEF stops moving
+                if (!isMoving)
                 {
-
                     // Change target material (eaten mat is white ball)
                     for (int i = 0; i < targets.Length; i++)
                     {
                         if (targets[i].name == player.GetComponent<Movement>().CollidedObject.name)
                         {
-                            changeTargetMaterial(targets[i], eaten_mat);
+                            changeTargetMaterial(targets[i], white);
                         }
                     }
 
-                    // Check if collided object is the correct one
-                    if (player.GetComponent<Movement>().CollidedObject.transform.position == CorrectTargetCurrentPosition)
+                    // Go to reward
+                    if ((Time.time - lastevent) >= 1f)
                     {
                         current_state = 99;
                     }
-                    else
-                    {
-                        error_state = $"ERR: Selected target at {player.GetComponent<Movement>().CollidedObject.transform.position} but correct position: {CorrectTargetCurrentPosition}";
-                        current_state = -99;
-                    }
+                }
 
+
+                // If player exits the collision (i.e. contact time lower than reaction time)
+                if (!player.GetComponent<Movement>().HasCollided)
+                {
+                    error_state = "ERR: Collision ended early in 2nd RT";
+                    current_state = -99;
                 }
 
                 #endregion
 
                 #region State End
-                // If player exits the collision (i.e. contact time lower than reaction time)
-                if (!player.GetComponent<Movement>().HasCollided)
+
+                if ((Time.time - lastevent) >= second_RT_maxduration)
                 {
-                    error_state = "ERR: Moved too early in 2nd RT";
+                    error_state = "ERR: Not Moving in RT";
                     current_state = -99;
                 }
+         
                 #endregion
 
                 break;
