@@ -1058,8 +1058,8 @@ MonoBehaviour:
   RT_timing:
   - 5
   BASELINE_duration: 1
-  INTERTRIAL_duration: 1
-  MOVEMENT_maxduration: 100
+  INTERTRIAL_duration: 100
+  MOVEMENT_maxduration: 10
   second_RT_maxduration: 1
 --- !u!114 &1239289646
 MonoBehaviour:
