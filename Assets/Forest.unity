@@ -1041,7 +1041,7 @@ MonoBehaviour:
   seed: 1
   starttime: 0
   frame_number: 0
-  RewardLength: 10
+  RewardLength: 200
   reward_counter: 0
   minimumRewardTime: 200
   minimumDistance: 2
@@ -1058,7 +1058,7 @@ MonoBehaviour:
   RT_timing:
   - 5
   BASELINE_duration: 1
-  INTERTRIAL_duration: 100
+  INTERTRIAL_duration: 1
   MOVEMENT_maxduration: 10
   second_RT_maxduration: 1
 --- !u!114 &1239289646
@@ -1074,7 +1074,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ardu_working: 0
-  testing: 0
+  testing: 1
   COM: COM5
   ax1: 0
   ax2: 0

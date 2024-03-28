@@ -5,15 +5,13 @@ using System;
 public class Ardu : MonoBehaviour
 {
     arduino ardu;
-    public bool ardu_working = false;
+    public bool ardu_working = true;
     public bool testing = false;
     public string COM = "COM10";
     public float ax1 = float.NaN;
     public float ax2 = float.NaN;
     public int reward_counter;
-
     private bool ans = false;
-    //public int dead_zone;
 
 
     void Start()
@@ -45,6 +43,7 @@ public class Ardu : MonoBehaviour
             {
                 if (ardu.isWorkingCorrectly())
                 {
+                    ardu_working = true;
                     ax1 = ardu.getX();
                     ax2 = -ardu.getY();
                 }
@@ -53,7 +52,7 @@ public class Ardu : MonoBehaviour
                     ans = EditorUtility.DisplayDialog("Arduino Connection Error", "Unable to read correctly from the Arduino",
                                         "Go ahead in testing mode (no arduino)", "Exit game");
                     // You can add a delay here if you want
-                    if (ans) { testing = true; }
+                    if (ans) { testing = true; ardu_working = false; }
                     else { QuitGame(); }
                 }
             }
@@ -62,7 +61,7 @@ public class Ardu : MonoBehaviour
                 ans = EditorUtility.DisplayDialog("Arduino Connection Error", "Unable to read correctly from the Arduino",
                                                         "Go ahead in testing mode (no arduino)", "Exit game");
                 // You can add a delay here if you want
-                if (ans) { testing = true; }
+                if (ans) { testing = true; ardu_working = false; }
                 else { QuitGame(); }
             }
         }
@@ -96,9 +95,8 @@ public class Ardu : MonoBehaviour
         if (ardu_working)
         {
             ardu.sendSerial("R" + rewardTime.ToString());
-
+            Debug.Log("R" + rewardTime.ToString());
         }
-        Debug.Log("R" + rewardTime.ToString());
         reward_counter += 1;
     }
 
