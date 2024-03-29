@@ -1036,7 +1036,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MEF: ciuffa
-  path_to_data: C:\Users\edoar\Documents\Fattori_lab\test_data_folder
+  path_to_data: 
   RECORD_EYES: 0
   seed: 1
   starttime: 0
@@ -1045,12 +1045,14 @@ MonoBehaviour:
   reward_counter: 0
   minimumRewardTime: 200
   minimumDistance: 2
-  file_name_positions: custom_test
   trials_win: 0
   trials_lose: 0
   trials_for_target: 
   trials_for_cond: 5
+  file_name_positions: 9_balls_positions
   target_positions: []
+  Target_settings: 0
+  randomize_balls: 0
   FREE_timing:
   - 1
   DELAY_timing:
@@ -1074,7 +1076,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ardu_working: 0
-  testing: 1
+  testing: 0
   COM: COM5
   ax1: 0
   ax2: 0
@@ -2272,7 +2274,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1913868726606073930}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 980d34c50a6ca594e9711aa1902f5509, type: 3}
   m_Name: 
