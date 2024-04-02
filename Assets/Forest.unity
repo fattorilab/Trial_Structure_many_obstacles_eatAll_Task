@@ -1036,7 +1036,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MEF: ciuffa
-  path_to_data: 
+  path_to_data: C:\Users\edoar\Documents\Fattori_lab\test_data_folder
   RECORD_EYES: 0
   seed: 1
   starttime: 0
@@ -1049,10 +1049,26 @@ MonoBehaviour:
   trials_lose: 0
   trials_for_target: 
   trials_for_cond: 5
-  file_name_positions: 9_balls_positions
+  obstacles_x_pos:
+  - -15
+  - -10
+  - -5
+  - 0
+  - 5
+  - 10
+  - 15
+  obstacles_z_pos:
+  - 5
+  - 10
+  - 15
+  - 20
+  - 25
+  - 30
+  - 35
+  randomizeRocksPosition: 1
+  file_name_positions: custom_positions_2palle
   target_positions: []
-  Target_settings: 0
-  randomize_balls: 0
+  randomizeTargetsPosition: 1
   FREE_timing:
   - 1
   DELAY_timing:

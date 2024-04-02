@@ -63,7 +63,7 @@ public class Rocks : MonoBehaviour
                 experiment.GetComponent<Saver>().addObject(child.GetInstanceID().ToString(), child.tag,
                                         child.transform.position.x, child.transform.position.y, child.transform.position.z,
                                         child.transform.eulerAngles.x, child.transform.eulerAngles.y, child.transform.eulerAngles.z,
-                                        child.transform.localScale.x, child.transform.localScale.y, child.transform.localScale.z); // transform.eulerAngles.y
+                                        child.transform.localScale.x, child.transform.localScale.y, child.transform.localScale.z);
             }
         }
     }

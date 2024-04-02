@@ -76,20 +76,16 @@ public class MainTask : MonoBehaviour
     private string identifier;
     private bool isMoving = false;
     private bool first_frame;
+    // Obstacles 
+    public float[] obstacles_x_pos = { -15, -10, -5, 0, 5, 10, 15 };
+    public float[] obstacles_z_pos = { 5, 10, 15, 20, 25, 30, 35 };
+    public bool randomizeRocksPosition = true;
 
     [Header("Target Info")]
     public string file_name_positions;
     // List, because it is changing size during the runtime
     public List<Vector3> target_positions = new List<Vector3>();
-    public settingsEnum Target_settings = new settingsEnum();/*--------------------------------------->> CHANGE TO TAKE CSV AND THAT'S IT, WRITE TO RANDOMIZE ON LINEAR ROWS */
-    public enum settingsEnum
-    {
-        RandomThree,
-        MiddleThree,
-        Six,
-        All
-    };
-    [HideInInspector] public bool randomize_balls = false;
+    public bool randomizeTargetsPosition = true;
     GameObject[] targets;
     [System.NonSerialized] public GameObject TargetPrefab;
     [System.NonSerialized] public Vector3 CorrectTargetCurrentPosition;
@@ -106,9 +102,9 @@ public class MainTask : MonoBehaviour
 
     [Header("Epoches Info")]
     // Array, because is not changing size during the runtime
-    public float[] FREE_timing = { 0.3f, 0.6f, 0.9f };
-    public float[] DELAY_timing = { 0.3f, 0.6f, 0.9f };
-    public float[] RT_timing = { 0.3f, 0.6f, 0.9f };
+    [System.NonSerialized] public float[] FREE_timing = { 0.3f, 0.6f, 0.9f };
+    [System.NonSerialized] public float[] DELAY_timing = { 0.3f, 0.6f, 0.9f };
+    [System.NonSerialized] public float[] RT_timing = { 0.3f, 0.6f, 0.9f };
 
     private List<int> FREE_timing_list;
     private List<int> DELAY_timing_list;
@@ -188,16 +184,16 @@ public class MainTask : MonoBehaviour
 
         // Import targets coordinates from csv file into target_positions list
         // and initiate the targets in a disable state (i.e invisible)
-        InstantiateTargets(target_positions, Target_settings);
+        InstantiateTargets(target_positions);
 
         // Define number of trials per each target
-        trials_for_target = new int[target_positions.Count];
+        //trials_for_target = new int[target_positions.Count];
 
         // Generate condition and timing vectors
-        condition_list = CreateRandomSequence(target_positions.Count, trials_for_cond * target_positions.Count);
-        FREE_timing_list = CreateRandomSequence(FREE_timing.Length, trials_for_cond * target_positions.Count);
-        DELAY_timing_list = CreateRandomSequence(DELAY_timing.Length, trials_for_cond * target_positions.Count);
-        RT_timing_list = CreateRandomSequence(RT_timing.Length, trials_for_cond * target_positions.Count);
+        //condition_list = CreateRandomSequence(target_positions.Count, trials_for_cond * target_positions.Count);
+        //FREE_timing_list = CreateRandomSequence(FREE_timing.Length, trials_for_cond * target_positions.Count);
+        //DELAY_timing_list = CreateRandomSequence(DELAY_timing.Length, trials_for_cond * target_positions.Count);
+        //RT_timing_list = CreateRandomSequence(RT_timing.Length, trials_for_cond * target_positions.Count);
 
         // Black pixels (markers for scripts syncing)
         markerObject_M = GameObject.CreatePrimitive(PrimitiveType.Quad);
@@ -329,20 +325,24 @@ public class MainTask : MonoBehaviour
                 {
                     // Prepare everything for next trial
 
+                    // Instantiate rocks
+                    // if desired, randomize disposition of rocks and/or targets
+                    randomizeScene(randomizeTargetsPosition, randomizeRocksPosition, targets, obstacles_x_pos, obstacles_z_pos);
+
                     // Change target material 
                     for (int i = 0; i < targets.Length; i++)
                     {
-                        changeTargetMaterial(targets[i], initial_grey);      
+                        changeTargetMaterial(targets[i], red);      
                     }
 
-                    // Choose the correct target
-                    current_condition = condition_list[0];
-                    CorrectTargetCurrentPosition = target_positions[current_condition];
+                    //// Choose the correct target
+                    //current_condition = condition_list[0];
+                    //CorrectTargetCurrentPosition = target_positions[current_condition];
 
-                    // Picking first time from the timing list to select epoch durations in this trial
-                    FREE_duration = FREE_timing[FREE_timing_list[0]];
-                    DELAY_duration = DELAY_timing[DELAY_timing_list[0]];
-                    RT_maxduration = RT_timing[RT_timing_list[0]];
+                    //// Picking first time from the timing list to select epoch durations in this trial
+                    //FREE_duration = FREE_timing[FREE_timing_list[0]];
+                    //DELAY_duration = DELAY_timing[DELAY_timing_list[0]];
+                    //RT_maxduration = RT_timing[RT_timing_list[0]];
 
                     // Move to state 1
                     current_state = 1;
@@ -365,7 +365,7 @@ public class MainTask : MonoBehaviour
                     Debug.Log($"Current state: {current_state}");
 
                     // Enable targets
-                    showTargets(targets, randomize_balls);
+                    showTargets(targets);
 
                     //Beginning routine
                     lastevent = Time.time;
@@ -386,13 +386,18 @@ public class MainTask : MonoBehaviour
                 // MEF required to be static for a minimum time (i.e. FREE_duration)
                 if ((Time.time - lastevent) >= FREE_duration && !isMoving)
                 {
-                    current_state = 2;
+                    // current_state = 2; -------> usual structure of task
+                    
+                    // Jump to MOVEMENT state
+                    current_state = 4;
                 }
                 #endregion
 
                 break;
 
             /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            #region Skip state 2 (DELAY) and state 3 (first RT)
 
             case 2: //DELAY
 
@@ -478,6 +483,8 @@ public class MainTask : MonoBehaviour
 
                 break;
 
+            #endregion
+
             /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
             case 4: // MOVEMENT
@@ -498,24 +505,34 @@ public class MainTask : MonoBehaviour
                 if (player.GetComponent<Movement>().HasCollided) // If collision happened
                 {
 
-                    // Check if collided object is the correct one
-                    if (player.GetComponent<Movement>().CollidedObject.transform.position == CorrectTargetCurrentPosition)
+                    // Check if collided object is a target
+                    bool isRock = Regex.IsMatch(player.GetComponent<Movement>().CollidedObject.tag, @"Rock[1-5]$"); ;
+                    if (isRock)
                     {
-                        // Change target material
-                        for (int i = 0; i < targets.Length; i++)
-                        {
-                            if (targets[i].name == player.GetComponent<Movement>().CollidedObject.name)
-                            {
-                                changeTargetMaterial(targets[i], final_grey);
-                            }
-                        }
-
-                        current_state = 5;
+                        error_state = $"ERR: touched rock obstacle at {player.GetComponent<Movement>().CollidedObject.transform.position}";
+                        current_state = -99;
                     }
                     else
                     {
-                        error_state = $"ERR: Selected target at {player.GetComponent<Movement>().CollidedObject.transform.position} but correct position: {CorrectTargetCurrentPosition}";
-                        current_state = -99;
+                        // Check if collided target is the correct one
+                        if (player.GetComponent<Movement>().CollidedObject.transform.position == CorrectTargetCurrentPosition)
+                        {
+                            // Change target material
+                            for (int i = 0; i < targets.Length; i++)
+                            {
+                                if (targets[i].name == player.GetComponent<Movement>().CollidedObject.name)
+                                {
+                                    changeTargetMaterial(targets[i], final_grey);
+                                }
+                            }
+
+                            current_state = 5;
+                        }
+                        else
+                        {
+                            error_state = $"ERR: Selected target at {player.GetComponent<Movement>().CollidedObject.transform.position} but correct position: {CorrectTargetCurrentPosition}";
+                            current_state = -99;
+                        }
                     }
 
                 }
@@ -829,32 +846,11 @@ public class MainTask : MonoBehaviour
         }
     }
 
-    private void InstantiateTargets(List<Vector3> target_positions, settingsEnum Target_settings)
+    private void InstantiateTargets(List<Vector3> target_positions)
     {
 
         // Import targets coordinates from csv file into target_positions list
         LoadPositionsFromCSV(target_positions);
-
-        // Filter targets based on Target settings ---------------------------------------------------------------------------------------------------------------------------------------------------->> CHANGE 
-        float[] fixed_orientations = { 160, 0, -160, 0, 0, 0, 0, 0, 0 };
-        if (Target_settings == settingsEnum.All && Target_settings == settingsEnum.RandomThree)
-        {
-            // Do nothing
-        }
-        else if (Target_settings == settingsEnum.RandomThree)
-        {
-            randomize_balls = true;
-        }
-        else if (Target_settings == settingsEnum.MiddleThree)
-        {
-            target_positions = target_positions.Skip(3).Take(3).ToList();
-            fixed_orientations = fixed_orientations.Skip(3).Take(3).ToArray();
-        }
-        else if (Target_settings == settingsEnum.Six)
-        {
-            target_positions = target_positions.Take(6).ToList();
-            fixed_orientations = fixed_orientations.Take(6).ToArray();
-        }
 
         // Instantiate targets (switched off)
         targets = new GameObject[target_positions.Count];
@@ -862,7 +858,7 @@ public class MainTask : MonoBehaviour
         for (int i = 0; i < targets.Length; i++)
         {
             // Instantiate
-            targets[i] = Instantiate(TargetPrefab, target_positions[i], Quaternion.Euler(0, fixed_orientations[i], 0), environment.transform);
+            targets[i] = Instantiate(TargetPrefab, target_positions[i], Quaternion.Euler(0, 0, 0), environment.transform);
             targets[i].name = $"{TargetPrefab.name}_" + i.ToString();
 
             // Disable (make invisible)
@@ -884,22 +880,9 @@ public class MainTask : MonoBehaviour
         }
     }
 
-    private void showTargets(GameObject[] targets, bool randomize)
+    private void showTargets(GameObject[] targets)
     {
-
-        // Randomize which balls to show -------------------------------------------------------------------------------->> CHANGE
-        int i = 0;
-        int row = targets.Length;
-        if (randomize)
-        {
-            // Select group to show, based on seed
-            int[] balls_groups = { 3, 6, 9 };
-            int index = UnityEngine.Random.Range(0, balls_groups.Length);
-            row = balls_groups[index];
-            i = (row - 3);
-        }
-
-        for (; i < row; i++)
+        for (int i = 0; i < targets.Length; i++)
         {
             // Enable (make visible)
             targets[i].GetComponent<MeshRenderer>().enabled = true;
@@ -923,6 +906,7 @@ public class MainTask : MonoBehaviour
 
     #endregion
 
+    #region Manage black marker
     private void CreateMarkerBlack(GameObject markerObj, Camera Camera)
     {
         // Set the position and scale of the Quad
@@ -962,4 +946,94 @@ public class MainTask : MonoBehaviour
         experiment.GetComponent<Saver>().addObjectEnd(markerObj.GetInstanceID().ToString());
         Destroy(markerObj);
     }
+    #endregion
+
+
+    #region Manage scene and obstacles
+
+    private void randomizeScene(bool randomizeTargets, bool randomizeRocks, GameObject[] targets, float[] x_pos_array, float[] z_pos_array)
+    {
+        // Sanity checks
+        if (targets.Length > x_pos_array.Length || targets.Length > z_pos_array.Length)
+        {
+            Debug.LogError("There are more targets than available positions. " +
+                "Please, increase number of obstacles positions or decrease number of targets");
+            QuitGame();
+        }
+
+        if (!randomizeTargets && !randomizeRocks)
+        {
+            Debug.LogError("Targets and rocks are NOT randomized!!");
+            QuitGame();
+        }
+
+        // Shuffle position arrays
+        Shuffle(x_pos_array);
+        Shuffle(z_pos_array);
+
+        // Randomize rocks, if desired
+        if (randomizeRocks)
+        {
+            instantiateRandomRocks(targets, x_pos_array, z_pos_array);
+        }
+
+        // Randomize targets, if desired
+        if (randomizeTargets)
+        {
+            for (int i = 0; i < targets.Length; i++)
+            {
+
+                if (z_pos_array[i] > 15) //artificially make it less likely to just be there
+                {
+                    targets[i].transform.position = new Vector3(x_pos_array[i], 0.5f, z_pos_array[i]);
+                }
+                else
+                {
+                    targets[i].transform.position = new Vector3(x_pos_array[i], 0.5f, z_pos_array[z_pos_array.Length - 1]);
+                }
+
+                GetComponent<Saver>().addObject(targets[i].name, "Target_Position",
+                    targets[i].transform.position.x, 0, targets[i].transform.position.z,
+                    0, 0, 0,
+                    0, 0, 0);
+
+            }
+        }
+
+    }
+
+    private void instantiateRandomRocks(GameObject[] targets, float[] x_pos_array, float[] z_pos_array)
+    {
+        // Delete current rocks
+        environment.GetComponent<Rocks>().deleteRocks();
+
+        // Instantiate new rocks, randomly disposed
+        for (int i = targets.Length; i < x_pos_array.Length; i++)
+        {
+            environment.GetComponent<Rocks>().MakeRock(x_pos_array[i], z_pos_array[i]);
+        }
+
+        for (int i = 0; i < x_pos_array.Length - 1; i++)
+        {
+            environment.GetComponent<Rocks>().MakeRock(x_pos_array[i], z_pos_array[i + 1]);
+            environment.GetComponent<Rocks>().MakeRock(x_pos_array[i + 1], z_pos_array[i]);
+        }
+
+        // Save new rocks
+        environment.GetComponent<Rocks>().saveObjects();
+    }
+
+    private void Shuffle(float[] array)
+    {
+        int n = array.Length - 1;
+        for (; n > 0; n--)
+        {
+            int r = UnityEngine.Random.Range(0, n);
+            float t = array[r];
+            array[r] = array[n];
+            array[n] = t;
+        }
+    }
+
+    #endregion
 }
