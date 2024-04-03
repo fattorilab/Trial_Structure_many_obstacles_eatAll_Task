@@ -1043,8 +1043,6 @@ MonoBehaviour:
   frame_number: 0
   RewardLength: 200
   reward_counter: 0
-  minimumRewardTime: 200
-  minimumDistance: 2
   trials_win: 0
   trials_lose: 0
   trials_for_target: 
@@ -1069,16 +1067,10 @@ MonoBehaviour:
   file_name_positions: custom_positions_2palle
   target_positions: []
   randomizeTargetsPosition: 1
-  FREE_timing:
-  - 1
-  DELAY_timing:
-  - 1
-  RT_timing:
-  - 5
-  BASELINE_duration: 1
+  BASELINE_duration: 5
   INTERTRIAL_duration: 1
-  MOVEMENT_maxduration: 10
-  second_RT_maxduration: 1
+  MOVEMENT_maxduration: 100
+  RT_maxduration: 2
 --- !u!114 &1239289646
 MonoBehaviour:
   m_ObjectHideFlags: 0

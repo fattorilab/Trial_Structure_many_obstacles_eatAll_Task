@@ -59,10 +59,6 @@ public class CreateTreesAndTargets : MonoBehaviour
             createAndSaveObject(tree2, "Obstacle"); //Distraktor
             createAndSaveObject(tree3, "Obstacle"); //Distraktor
 
-            /*createAndSaveObject(lowlevel, "LowTarget");
-            createAndSaveObject(midlevel, "MidTarget");
-            createAndSaveObject(highlevel, "HighTarget");
-            createAndSaveObject(doubleobject, "DoubleTarget");*/
         }
 
         //saveObjects();
@@ -71,10 +67,12 @@ public class CreateTreesAndTargets : MonoBehaviour
 
     void createAndSaveObject(GameObject Prefab, string type)
     {
+        // Create
         Vector3 pos = new Vector3(UnityEngine.Random.Range(-25f, 25f), 0, UnityEngine.Random.Range(-25f, 25f));
         GameObject newObject = Instantiate(Prefab, transform.position + pos, Quaternion.Euler(0, UnityEngine.Random.Range(-180f, 180f), 0), transform);
         newObject.tag = type;
 
+        // Save
         Vector3 position = newObject.transform.position;
         Vector3 rotation = newObject.transform.eulerAngles;
         Vector3 scale = newObject.transform.localScale;
@@ -106,22 +104,19 @@ public class CreateTreesAndTargets : MonoBehaviour
                 Vector3 rotation = child.eulerAngles;
                 Vector3 scale = child.localScale;
 
-                //try
-                //{
-                    // If all required components are not null, proceed with saving
-                    experiment.GetComponent<Saver>().addObject(
-                        child.GetInstanceID().ToString(), 
-                        child.tag,
-                        position[0], 
-                        position[1], 
-                        position[2],
-                        rotation[0], 
-                        rotation[1], 
-                        rotation[2],
-                        scale[0], 
-                        scale[1], 
-                        scale[2]);
-            }
+                experiment.GetComponent<Saver>().addObject(
+                    child.GetInstanceID().ToString(), 
+                    child.tag,
+                    position[0], 
+                    position[1], 
+                    position[2],
+                    rotation[0], 
+                    rotation[1], 
+                    rotation[2],
+                    scale[0], 
+                    scale[1], 
+                    scale[2]);
+        }
         }
     }
 
