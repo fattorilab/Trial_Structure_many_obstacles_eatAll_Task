@@ -234,9 +234,9 @@ public class MainTask : MonoBehaviour
                     current_condition = -1;
 
                     // Switch ON black pixels objects
-                    markerObject_M.SetActive(true);
-                    markerObject_R.SetActive(true);
-                    markerObject_L.SetActive(true);
+                    showMarkerBlack(markerObject_M);
+                    showMarkerBlack(markerObject_R);
+                    showMarkerBlack(markerObject_L);
 
                     //Beginning routine
                     lastevent = Time.time;
@@ -261,9 +261,9 @@ public class MainTask : MonoBehaviour
                     player.GetComponent<Movement>().restrict_horizontal = 1;
 
                     // Switch OFF black pixels objects
-                    markerObject_M.SetActive(false);
-                    markerObject_R.SetActive(false);
-                    markerObject_L.SetActive(false);
+                    hideMarkerBlack(markerObject_M);
+                    hideMarkerBlack(markerObject_R);
+                    hideMarkerBlack(markerObject_L);
 
                     // Instantiate rocks
                     // if desired, randomize disposition of rocks and/or targets
@@ -531,10 +531,10 @@ public class MainTask : MonoBehaviour
 
     void OnApplicationQuit()
     {
-        // Save and Destroy black pixels objects
-        SaveandDestroyMarkerBlack(markerObject_M);
-        SaveandDestroyMarkerBlack(markerObject_R);
-        SaveandDestroyMarkerBlack(markerObject_L);
+        // Destroy black pixels objects
+        Destroy(markerObject_M);
+        Destroy(markerObject_R);
+        Destroy(markerObject_L);
 
         ardu.SendStopRecordingOE();
         Debug.Log("END OF SESSION");
@@ -557,6 +557,9 @@ public class MainTask : MonoBehaviour
 
     void reset_win()
     {
+        // Reset collision
+        player.GetComponent<Movement>().resetCollision();
+
         // Send reward
         ardu.SendReward(RewardLength);
 
@@ -566,6 +569,9 @@ public class MainTask : MonoBehaviour
 
     void reset_lose()
     {
+        // Reset collision
+        player.GetComponent<Movement>().resetCollision();
+
         // Disable targets
         hideTargets(targets);
 
@@ -648,10 +654,20 @@ public class MainTask : MonoBehaviour
             targets[i] = Instantiate(TargetPrefab, target_positions[i], Quaternion.Euler(0, 0, 0), environment.transform);
             targets[i].name = $"{TargetPrefab.name}_" + i.ToString();
 
-            // Disable (make invisible)
-            targets[i].GetComponent<MeshRenderer>().enabled = false;
+            // Set as inactive (invisible)
+            targets[i].SetActive(false);
 
-            // Add target to data to be saved
+        }
+    }
+
+    private void showTargets(GameObject[] targets)
+    {
+        for (int i = 0; i < targets.Length; i++)
+        {
+            // Set as active (visible)
+            targets[i].SetActive(true);
+
+            // Save target as soon as becomes visible
             GetComponent<Saver>().addObject(targets[i].name,
                 "Target",
                 targets[i].transform.position.x,
@@ -667,22 +683,19 @@ public class MainTask : MonoBehaviour
         }
     }
 
-    private void showTargets(GameObject[] targets)
-    {
-        for (int i = 0; i < targets.Length; i++)
-        {
-            // Enable (make visible)
-            targets[i].GetComponent<MeshRenderer>().enabled = true;
-        }
-    }
-
     private void hideTargets(GameObject[] targets)
-    { 
+    {
 
         for (int i = 0; i < targets.Length; i++)
         {
-            // Disable (make invisible)
-            targets[i].GetComponent<MeshRenderer>().enabled = false;
+            if (targets[i].activeSelf == true)
+            {
+                // Set as inactive (invisible)
+                targets[i].SetActive(false);
+
+                // Save target end when it stops being visible
+                GetComponent<Saver>().addObjectEnd(targets[i].name);
+            }
         }
     }
 
@@ -718,20 +731,28 @@ public class MainTask : MonoBehaviour
 
         // Initially set the marker to be invisible
         markerObj.SetActive(false);
+    }
 
-        // Save object
+    private void showMarkerBlack(GameObject markerObj)
+    {
+        // Set active
+        markerObj.SetActive(true);
+
+        // // Save marker as soon as becomes visible
         string identifier = markerObj.GetInstanceID().ToString();
         experiment.GetComponent<Saver>().addObject(identifier, "Black_pixels",
                         markerObj.transform.position.x, markerObj.transform.position.y, markerObj.transform.position.z,
                         markerObj.transform.eulerAngles.x, markerObj.transform.eulerAngles.y, markerObj.transform.eulerAngles.z,
                         markerObj.transform.localScale.x, markerObj.transform.localScale.y, markerObj.transform.localScale.z);
-
     }
 
-    private void SaveandDestroyMarkerBlack(GameObject markerObj)
+    private void hideMarkerBlack(GameObject markerObj)
     {
-        experiment.GetComponent<Saver>().addObjectEnd(markerObj.GetInstanceID().ToString());
-        Destroy(markerObj);
+        // Set inactive
+        markerObj.SetActive(false);
+
+        // Save marker end when it stops being visible
+        GetComponent<Saver>().addObjectEnd(markerObj.GetInstanceID().ToString());
     }
     #endregion
 

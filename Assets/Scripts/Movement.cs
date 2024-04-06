@@ -32,6 +32,7 @@ public class Movement : MonoBehaviour
     [System.NonSerialized] public bool HasCollided = false;
     [System.NonSerialized] public float CollisionTime = 0f;
     [System.NonSerialized] public GameObject CollidedObject;
+    private Vector3 lastPosition;
 
     // Start is called before the first frame update
     void Start()
@@ -55,8 +56,23 @@ public class Movement : MonoBehaviour
 
     void OnCollisionExit(Collision other)
     {
-        // Acknowledge collision for the maintask
-        HasCollided = false;
+        if (Vector3.Distance(transform.position, lastPosition) > 0.1f)
+        {
+            // Acknowledge collision end for the maintask
+            HasCollided = false;
+
+            // Reset collision time
+            CollisionTime = 0f;
+        }
+    }
+
+    public void resetCollision()
+    {
+        // Reset collision to false
+        if (HasCollided)
+        {
+            HasCollided = false;
+        }
 
         // Reset collision time
         CollisionTime = 0f;
