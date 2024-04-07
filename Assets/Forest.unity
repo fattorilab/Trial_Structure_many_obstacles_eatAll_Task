@@ -1067,7 +1067,7 @@ MonoBehaviour:
   file_name_positions: custom_positions_2palle
   target_positions: []
   randomizeTargetsPosition: 1
-  BASELINE_duration: 5
+  BASELINE_duration: 1
   INTERTRIAL_duration: 1
   MOVEMENT_maxduration: 100
   RT_maxduration: 2

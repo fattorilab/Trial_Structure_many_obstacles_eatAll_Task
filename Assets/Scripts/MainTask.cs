@@ -10,6 +10,14 @@ using UnityEngine;
 using UnityEditor;
 using PupilLabs;
 
+/*
+NOTICE:
+- Position is not reset after collecting single target, but only when all are collected;
+- Number of trials is increased only after collecting all target; 
+- No need for trials_for_target;
+ */
+
+
 
 public class MainTask : MonoBehaviour
 {
@@ -64,7 +72,6 @@ public class MainTask : MonoBehaviour
     [System.NonSerialized] public int current_trial;
     public int trials_win;
     public int trials_lose;
-    public int[] trials_for_target;
     public int trials_for_cond = 1;
     // Conditions
     [System.NonSerialized] public int current_condition;
@@ -353,22 +360,27 @@ public class MainTask : MonoBehaviour
                     bool isTree = Regex.IsMatch(player.GetComponent<Movement>().CollidedObject.tag, @"\btree\b"); ;
                     if (isRock || isTree)
                     {
-                        error_state = $"ERR: touched rock obstacle at {player.GetComponent<Movement>().CollidedObject.transform.position}";
+                        error_state = $"ERR: touched rock/tree obstacle at {player.GetComponent<Movement>().CollidedObject.transform.position}";
                         current_state = -99;
                     }
                     else // Target
                     {
-                        // Change target material
+                        // Change target material -------------------------------------------------------------------------->> UNREACTIVE IF FRUIT IS WHITE. OK? OR NEED RESET POSITION?
                         for (int i = 0; i < targets.Length; i++)
                         {
                             if (targets[i].name == player.GetComponent<Movement>().CollidedObject.name)
                             {
-                                changeTargetMaterial(targets[i], final_grey);
+                                // Not already taken
+                                if (targets[i].GetComponent<MeshRenderer>().material.mainTexture != white.mainTexture)
+                                {
+
+                                    changeTargetMaterial(targets[i], final_grey);
+
+                                    // Go to RT state
+                                    current_state = 2;
+                                }
                             }
                         }
-
-                        // Go to RT state
-                        current_state = 2;
                     }
 
                 }
@@ -472,7 +484,11 @@ public class MainTask : MonoBehaviour
                 #region State Beginning
                 if (last_state != current_state)
                 {
-                    // Change target material
+                    //Beginning routine
+                    lastevent = Time.time;
+                    last_state = current_state;
+
+                    // Change target material to the material of reward
                     for (int i = 0; i < targets.Length; i++)
                     {
                         if (targets[i].name == player.GetComponent<Movement>().CollidedObject.name)
@@ -481,14 +497,11 @@ public class MainTask : MonoBehaviour
                         }
                     }
 
-                    Debug.Log("TRIAL DONE");
-                    GetComponent<Saver>().addObjectEnd(player.GetComponent<Movement>().CollidedObject.name);
+                    // Reset collision
+                    player.GetComponent<Movement>().resetCollision();
 
-                    reset_win();
-
-                    //Beginning routine
-                    lastevent = Time.time;
-                    last_state = current_state;
+                    // Send reward for the single target
+                    ardu.SendReward(RewardLength);
 
                 }
                 #endregion
@@ -500,20 +513,30 @@ public class MainTask : MonoBehaviour
                 #region State End
                 if ((Time.time - lastevent) >= RewardLength_in_sec)
                 {
-                    // Disable targets
-                    hideTargets(targets);
 
-                    // Reset position
-                    reset_position();
+                    // Change state
+                    if (allTargetsTaken(targets, white))
+                    {
 
-                    current_state = -1;
+                        // All target taken, trial ends
+                        Debug.Log("TRIAL DONE");
+
+                        // Reset win
+                        reset_win();
+
+                        // Go to INTERTRIAL state
+                        current_state = -1;
+                    }
+                    else
+                    {
+                        // Go to MOVEMENT state, keep playing
+                        current_state = 1;
+                    }
 
                     // Randomize rocks' or targets' positions
                     randomizeRocksPosition = true;
                     randomizeTargetsPosition = true;
 
-                    // Delete current rocks
-                    environment.GetComponent<Rocks>().deleteRocks();
                 }
                 #endregion
 
@@ -560,8 +583,14 @@ public class MainTask : MonoBehaviour
         // Reset collision
         player.GetComponent<Movement>().resetCollision();
 
-        // Send reward
-        ardu.SendReward(RewardLength);
+        // Reset position
+        reset_position();
+
+        // Disable targets
+        hideTargets(targets);
+
+        // Delete current rocks
+        environment.GetComponent<Rocks>().deleteRocks();
 
         // Count trial
         trials_win++;
@@ -702,6 +731,22 @@ public class MainTask : MonoBehaviour
     private void changeTargetMaterial(GameObject target, Material mat)
     {
         target.GetComponent<MeshRenderer>().material = mat;
+    }
+
+    private static bool allTargetsTaken(GameObject[] targets, Material reward_material)
+    {    
+        for (int i = 0; i < targets.Length; i++)
+        {
+            // Check if material is NOT reward material, i.e. that of the taken target
+            if (targets[i].GetComponent<MeshRenderer>().material.mainTexture != reward_material.mainTexture)
+            {
+                // Not all targets are taken
+                return false;
+            }
+        }
+
+        // All targets are taken
+        return true;
     }
 
     #endregion
