@@ -1037,7 +1037,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MEF: ciuffa
   path_to_data: C:\Users\edoar\Documents\Fattori_lab\test_data_folder
-  RECORD_EYES: 0
   seed: 1
   starttime: 0
   frame_number: 0
@@ -1069,7 +1068,7 @@ MonoBehaviour:
   randomizeTargetsPosition: 1
   BASELINE_duration: 1
   INTERTRIAL_duration: 1
-  MOVEMENT_maxduration: 100
+  MOVEMENT_maxduration: 20
   RT_maxduration: 2
 --- !u!114 &1239289646
 MonoBehaviour:

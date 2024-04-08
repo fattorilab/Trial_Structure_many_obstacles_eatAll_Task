@@ -52,7 +52,6 @@ public class MainTask : MonoBehaviour
     [Header("Saving info")]
     public string MEF;
     public string path_to_data = "C:/Users/admin/Desktop/Registrazioni_VR/";
-    public bool RECORD_EYES;
     [System.NonSerialized] public int lastIDFromDB;
     [HideInInspector] public int seed;
     [HideInInspector] public long starttime = 0;
@@ -64,15 +63,16 @@ public class MainTask : MonoBehaviour
     public int reward_counter = 0; //just for having this information readibily accessible
 
     [Header("Trials Info")]
-    // States
-    [System.NonSerialized] public int current_state;
-    private int last_state;
-    [System.NonSerialized] public string error_state;
     // Trials
-    [System.NonSerialized] public int current_trial;
     public int trials_win;
     public int trials_lose;
+    [System.NonSerialized] public int current_trial;
+    public int[] trials_for_target;
     public int trials_for_cond = 1;
+    // States
+    [System.NonSerialized] public int current_state;
+    [System.NonSerialized] public int last_state;
+    [System.NonSerialized] public string error_state;
     // Conditions
     [System.NonSerialized] public int current_condition;
     //
@@ -357,7 +357,7 @@ public class MainTask : MonoBehaviour
 
                     // Check if collided object is a target or not
                     bool isRock = Regex.IsMatch(player.GetComponent<Movement>().CollidedObject.tag, @"Rock[1-5]$"); ;
-                    bool isTree = Regex.IsMatch(player.GetComponent<Movement>().CollidedObject.tag, @"\btree\b"); ;
+                    bool isTree = Regex.IsMatch(player.GetComponent<Movement>().CollidedObject.tag, @"\btree\b");
                     if (isRock || isTree)
                     {
                         error_state = $"ERR: touched rock/tree obstacle at {player.GetComponent<Movement>().CollidedObject.transform.position}";
@@ -365,7 +365,7 @@ public class MainTask : MonoBehaviour
                     }
                     else // Target
                     {
-                        // Change target material -------------------------------------------------------------------------->> UNREACTIVE IF FRUIT IS WHITE. OK? OR NEED RESET POSITION?
+                        // Change target material
                         for (int i = 0; i < targets.Length; i++)
                         {
                             if (targets[i].name == player.GetComponent<Movement>().CollidedObject.name)
@@ -448,10 +448,9 @@ public class MainTask : MonoBehaviour
                 #region State Beginning
                 if (last_state != current_state)
                 {
+
                     Debug.Log($"Current state: {current_state}");
                     Debug.Log(error_state);
-
-                    reset_lose();
 
                     //Beginning routine
                     lastevent = Time.time;
@@ -466,7 +465,24 @@ public class MainTask : MonoBehaviour
                 #region State End
                 if (true)
                 {
-                    current_state = -1;
+
+                    // Check if an obstacle was touched while collecting all balls ----------------------------------------------------------------------------->> ASK IF OKAY
+                    bool touchedObstacle = Regex.IsMatch(error_state, @"touched rock/tree obstacle");
+                    if (touchedObstacle)
+                    {
+                        // Keep collecting
+                        current_state = 1;
+                    }
+                    else
+                    {
+
+                        reset_lose();
+                        current_state = -1;
+                    }
+                    
+
+                    //reset_lose();
+                    //current_state = -1;
                     error_state = "";
 
                     // Do not randomize rocks' or targets' positions
