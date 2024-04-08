@@ -433,7 +433,7 @@ public class MainTask : MonoBehaviour
 
                 if ((Time.time - lastevent) >= RT_maxduration)
                 {
-                    error_state = "ERR: Not Moving in RT";
+                    error_state = "ERR: Keeps moving in 2nd RT";
                     current_state = -99;
                 }
          
