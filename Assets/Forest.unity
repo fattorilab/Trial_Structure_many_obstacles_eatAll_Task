@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.59517413, g: 0.68075246, b: 0.7527039, a: 1}
+  m_IndirectSpecularColor: {r: 0.59517455, g: 0.6807535, b: 0.75270545, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -1036,7 +1036,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MEF: ciuffa
-  path_to_data: C:\Users\edoar\Documents\Fattori_lab\test_data_folder
+  path_to_data: C:\Users\admin\Desktop\Registrazioni_VR_FAKE
   seed: 1
   starttime: 0
   frame_number: 0
@@ -1084,7 +1084,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ardu_working: 0
   testing: 0
-  COM: COM5
+  COM: COM10
   ax1: 0
   ax2: 0
   reward_counter: 0

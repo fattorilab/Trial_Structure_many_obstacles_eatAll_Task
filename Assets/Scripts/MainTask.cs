@@ -67,8 +67,6 @@ public class MainTask : MonoBehaviour
     public int trials_win;
     public int trials_lose;
     [System.NonSerialized] public int current_trial;
-    public int[] trials_for_target;
-    public int trials_for_cond = 1;
     // States
     [System.NonSerialized] public int current_state;
     [System.NonSerialized] public int last_state;
@@ -93,6 +91,7 @@ public class MainTask : MonoBehaviour
     public List<Vector3> target_positions = new List<Vector3>();
     public bool randomizeTargetsPosition = true;
     GameObject[] targets;
+    public int rewardedTargets = 0;
     [System.NonSerialized] public GameObject TargetPrefab;
     [System.NonSerialized] public Vector3 CorrectTargetCurrentPosition;
 
@@ -262,11 +261,6 @@ public class MainTask : MonoBehaviour
                 #region State End (executed once upon exiting)
                 if ((Time.time - lastevent) > INTERTRIAL_duration)
                 {
-                    // Enable movement
-                    player.GetComponent<Movement>().restrict_backwards = 1;
-                    player.GetComponent<Movement>().restrict_forwards = 1;
-                    player.GetComponent<Movement>().restrict_horizontal = 1;
-
                     // Switch OFF black pixels objects
                     hideMarkerBlack(markerObject_M);
                     hideMarkerBlack(markerObject_R);
@@ -275,6 +269,18 @@ public class MainTask : MonoBehaviour
                     // Instantiate rocks
                     // if desired, randomize disposition of rocks and/or targets
                     randomizeScene(randomizeTargetsPosition, randomizeRocksPosition, targets, obstacles_x_pos, obstacles_z_pos);
+
+                    // Reset number of collected targets
+                    rewardedTargets = 0;
+
+                    // Change target material 
+                    for (int i = 0; i < targets.Length; i++)
+                    {
+                        changeTargetMaterial(targets[i], red);
+                    }
+
+                    // Make targets visible
+                    showTargets(targets);
 
                     // Move to state 0
                     current_state = 0;
@@ -302,26 +308,16 @@ public class MainTask : MonoBehaviour
                 #endregion
 
                 #region State Body (executed every frame while in state)
-                // Prevent entering MOVEMENT state from a position different from initial
-                if (isMoving)
-                {
-                    reset_position();
-                }
+
                 #endregion
 
                 #region State End (executed once upon exiting)
                 if (notMovingForTime(BASELINE_duration))
                 {
-                    // Prepare everything for next trial
-
-                    // Make targets visible
-                    showTargets(targets);
-
-                    // Change target material 
-                    for (int i = 0; i < targets.Length; i++)
-                    {
-                        changeTargetMaterial(targets[i], red);      
-                    }
+                    // Enable movement
+                    player.GetComponent<Movement>().restrict_backwards = 1;
+                    player.GetComponent<Movement>().restrict_forwards = 1;
+                    player.GetComponent<Movement>().restrict_horizontal = 1;
 
                     // Go to MOVEMENT state
                     current_state = 1;
@@ -348,6 +344,7 @@ public class MainTask : MonoBehaviour
                     lastevent = Time.time;
                     last_state = current_state;
                     error_state = "";
+
                 }
                 #endregion
 
@@ -416,7 +413,19 @@ public class MainTask : MonoBehaviour
                 // MEF stops moving
                 if (!isMoving)
                 {
-                    current_state = 99;
+                    // Change state
+
+                    // If this is the last target to collect
+                    if (rewardedTargets == (targets.Length - 1))
+                    {
+                        // Go to WIN ALL state
+                        current_state = 99;
+                    }
+                    else
+                    {
+                        // Go to WIN ONE state
+                        current_state = 98;
+                    }
                 }
 
 
@@ -465,24 +474,11 @@ public class MainTask : MonoBehaviour
                 #region State End
                 if (true)
                 {
+                    // Reset
+                    reset_lose();
 
-                    // Check if an obstacle was touched while collecting all balls ----------------------------------------------------------------------------->> ASK IF OKAY
-                    bool touchedObstacle = Regex.IsMatch(error_state, @"touched rock/tree obstacle");
-                    if (touchedObstacle)
-                    {
-                        // Keep collecting
-                        current_state = 1;
-                    }
-                    else
-                    {
-
-                        reset_lose();
-                        current_state = -1;
-                    }
-                    
-
-                    //reset_lose();
-                    //current_state = -1;
+                    // Go to BASELINE
+                    current_state = 0;
                     error_state = "";
 
                     // Do not randomize rocks' or targets' positions
@@ -495,7 +491,7 @@ public class MainTask : MonoBehaviour
 
             /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-            case 99: //WIN
+            case 98: // WIN FOR SINGLE TARGET
 
                 #region State Beginning
                 if (last_state != current_state)
@@ -513,8 +509,49 @@ public class MainTask : MonoBehaviour
                         }
                     }
 
-                    // Reset collision
-                    player.GetComponent<Movement>().resetCollision();
+                    // Send reward for the single target
+                    ardu.SendReward(RewardLength);
+
+                    // Increase number of collected targets
+                    rewardedTargets += 1;
+
+                }
+                #endregion
+
+                #region State Body
+
+                #endregion
+
+                #region State End
+                if ((Time.time - lastevent) >= RewardLength_in_sec)
+                {
+                    // Go to MOVEMENT state, keep playing
+                    current_state = 1;
+
+                }
+                #endregion
+
+                break;
+
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            case 99: // WIN FOR ALL TARGETS
+
+                #region State Beginning
+                if (last_state != current_state)
+                {
+                    //Beginning routine
+                    lastevent = Time.time;
+                    last_state = current_state;
+
+                    // Change target material to the material of reward
+                    for (int i = 0; i < targets.Length; i++)
+                    {
+                        if (targets[i].name == player.GetComponent<Movement>().CollidedObject.name)
+                        {
+                            changeTargetMaterial(targets[i], white);
+                        }
+                    }
 
                     // Send reward for the single target
                     ardu.SendReward(RewardLength);
@@ -529,25 +566,14 @@ public class MainTask : MonoBehaviour
                 #region State End
                 if ((Time.time - lastevent) >= RewardLength_in_sec)
                 {
+                    // All target taken, trial ends
+                    Debug.Log("TRIAL DONE");
 
-                    // Change state
-                    if (allTargetsTaken(targets, white))
-                    {
+                    // Reset win
+                    reset_win();
 
-                        // All target taken, trial ends
-                        Debug.Log("TRIAL DONE");
-
-                        // Reset win
-                        reset_win();
-
-                        // Go to INTERTRIAL state
-                        current_state = -1;
-                    }
-                    else
-                    {
-                        // Go to MOVEMENT state, keep playing
-                        current_state = 1;
-                    }
+                    // Go to INTERTRIAL state
+                    current_state = -1;
 
                     // Randomize rocks' or targets' positions
                     randomizeRocksPosition = true;
@@ -617,9 +643,6 @@ public class MainTask : MonoBehaviour
         // Reset collision
         player.GetComponent<Movement>().resetCollision();
 
-        // Disable targets
-        hideTargets(targets);
-
         // Reset position
         reset_position();
 
@@ -634,9 +657,9 @@ public class MainTask : MonoBehaviour
         player_rb.rotation = Quaternion.identity;
 
         // Enable player movement 
-        player.GetComponent<Movement>().restrict_backwards = 1;
-        player.GetComponent<Movement>().restrict_forwards = 1;
-        player.GetComponent<Movement>().restrict_horizontal = 1;
+        player.GetComponent<Movement>().restrict_backwards = 0;
+        player.GetComponent<Movement>().restrict_forwards = 0;
+        player.GetComponent<Movement>().restrict_horizontal = 0;
     }
 
     #endregion
@@ -714,7 +737,7 @@ public class MainTask : MonoBehaviour
 
             // Save target as soon as becomes visible
             GetComponent<Saver>().addObject(targets[i].name,
-                "Target",
+                $"Target_{i}",
                 targets[i].transform.position.x,
                 targets[i].transform.position.y,
                 targets[i].transform.position.z,
@@ -749,21 +772,21 @@ public class MainTask : MonoBehaviour
         target.GetComponent<MeshRenderer>().material = mat;
     }
 
-    private static bool allTargetsTaken(GameObject[] targets, Material reward_material)
-    {    
-        for (int i = 0; i < targets.Length; i++)
-        {
-            // Check if material is NOT reward material, i.e. that of the taken target
-            if (targets[i].GetComponent<MeshRenderer>().material.mainTexture != reward_material.mainTexture)
-            {
-                // Not all targets are taken
-                return false;
-            }
-        }
+    //private static bool allTargetsTaken(GameObject[] targets, Material reward_material)
+    //{    
+    //    for (int i = 0; i < targets.Length; i++)
+    //    {
+    //        // Check if material is NOT reward material, i.e. that of the taken target
+    //        if (targets[i].GetComponent<MeshRenderer>().material.mainTexture != reward_material.mainTexture)
+    //        {
+    //            // Not all targets are taken
+    //            return false;
+    //        }
+    //    }
 
-        // All targets are taken
-        return true;
-    }
+    //    // All targets are taken
+    //    return true;
+    //}
 
     #endregion
 
@@ -853,12 +876,6 @@ public class MainTask : MonoBehaviour
                 {
                     targets[i].transform.position = new Vector3(x_pos_array[i], 0.5f, z_pos_array[z_pos_array.Length - 1]);
                 }
-
-                GetComponent<Saver>().addObject(targets[i].name, "Target_Position",
-                    targets[i].transform.position.x, 0, targets[i].transform.position.z,
-                    0, 0, 0,
-                    0, 0, 0);
-
             }
         }
 
