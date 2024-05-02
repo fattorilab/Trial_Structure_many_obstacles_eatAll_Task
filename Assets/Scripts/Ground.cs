@@ -37,7 +37,12 @@ public class Ground : MonoBehaviour
     {
         if (player.transform.localPosition.x > midX + 25 || player.transform.localPosition.x < midX - 25 ||
             player.transform.localPosition.z > midZ + 25 || player.transform.localPosition.z < midZ - 25)
+<<<<<<< HEAD
         { // 25 to 40
+=======
+        {
+            // 25 to 40
+>>>>>>> 8d84b20 (Commenting thoroughly)
             if (player.transform.localPosition.x > midX + 40) { midX += 50; SwapRight(); }
             if (player.transform.localPosition.x < midX - 40) { midX -= 50; SwapLeft(); }
             if (player.transform.localPosition.z > midZ + 40) { midZ += 50; SwapForward(); }

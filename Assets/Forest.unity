@@ -1040,12 +1040,10 @@ MonoBehaviour:
   seed: 1
   starttime: 0
   frame_number: 0
-  RewardLength: 200
   reward_counter: 0
   trials_win: 0
   trials_lose: 0
-  trials_for_target: 
-  trials_for_cond: 5
+  current_state: 0
   obstacles_x_pos:
   - -15
   - -10
@@ -1066,6 +1064,7 @@ MonoBehaviour:
   file_name_positions: custom_positions_2palle
   target_positions: []
   randomizeTargetsPosition: 1
+  CorrectTargetCurrentPosition: {x: 0, y: 0, z: 0}
   BASELINE_duration: 1
   INTERTRIAL_duration: 1
   MOVEMENT_maxduration: 20
@@ -1802,15 +1801,15 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1913868724617376015}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 980d34c50a6ca594e9711aa1902f5509, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _width: 960
-  _height: 540
-  _preset: 0
-  _frameRate: 30
+  _width: 1280
+  _height: 720
+  _preset: 5
+  _frameRate: 60
   path_to_data_RecorderFrames: 
   path_to_video: 
 --- !u!54 &1913868725626146584
@@ -1947,12 +1946,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f560030cd00efe840a2078f3943f6c2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  presstime: 0
   speed: 2.5
-  reverse_Xaxis: 0
-  reverse_Yaxis: 0
   restrict_horizontal: 1
   restrict_backwards: 1
   restrict_forwards: 1
+  reverse_Xaxis: 0
+  reverse_Yaxis: 0
 --- !u!4 &1913868726121276997
 Transform:
   m_ObjectHideFlags: 0
@@ -2105,15 +2105,15 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1913868726121276998}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 980d34c50a6ca594e9711aa1902f5509, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _width: 960
-  _height: 540
-  _preset: 0
-  _frameRate: 30
+  _width: 1280
+  _height: 720
+  _preset: 5
+  _frameRate: 60
   path_to_data_RecorderFrames: 
   path_to_video: 
 --- !u!20 &1913868726606073928
@@ -2281,15 +2281,15 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1913868726606073930}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 980d34c50a6ca594e9711aa1902f5509, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _width: 960
-  _height: 540
-  _preset: 0
-  _frameRate: 30
+  _width: 1280
+  _height: 720
+  _preset: 5
+  _frameRate: 60
   path_to_data_RecorderFrames: 
   path_to_video: 
 --- !u!1 &8026010967362893542
