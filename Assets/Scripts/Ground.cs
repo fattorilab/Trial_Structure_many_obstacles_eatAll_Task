@@ -37,11 +37,11 @@ public class Ground : MonoBehaviour
     {
         if (player.transform.localPosition.x > midX + 25 || player.transform.localPosition.x < midX - 25 ||
             player.transform.localPosition.z > midZ + 25 || player.transform.localPosition.z < midZ - 25)
-        {
-            if (player.transform.localPosition.x > midX + 25) { midX += 50; SwapRight(); }
-            if (player.transform.localPosition.x < midX - 25) { midX -= 50; SwapLeft(); }
-            if (player.transform.localPosition.z > midZ + 25) { midZ += 50; SwapForward(); }
-            if (player.transform.localPosition.z < midZ - 25) { midZ -= 50; SwapBackward(); }
+        { // 25 to 40
+            if (player.transform.localPosition.x > midX + 40) { midX += 50; SwapRight(); }
+            if (player.transform.localPosition.x < midX - 40) { midX -= 50; SwapLeft(); }
+            if (player.transform.localPosition.z > midZ + 40) { midZ += 50; SwapForward(); }
+            if (player.transform.localPosition.z < midZ - 40) { midZ -= 50; SwapBackward(); }
             SetGround();
         }
 
