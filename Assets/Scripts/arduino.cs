@@ -37,7 +37,7 @@ public class arduino
     // The time of the last sample
     float lastSampleTime;
 
-# endregionoat lastSampleTime; // The time of the last sample
+    # endregion
 
     public arduino(string _COM, int _COMspeed, int _JSdeadzone)
     {

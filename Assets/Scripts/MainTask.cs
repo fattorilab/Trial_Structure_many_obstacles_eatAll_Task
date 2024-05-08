@@ -14,7 +14,6 @@ using PupilLabs;
 NOTICE:
 - Position is not reset after collecting single target, but only when all are collected;
 - Number of trials is increased only after collecting all target; 
-- No need for trials_for_target;
  */
 
 
@@ -69,8 +68,8 @@ public class MainTask : MonoBehaviour
     #region Reward Info
 
     [Header("Reward")]
-    public static int RewardLength = 50;
-    private float RewardLength_in_sec = RewardLength / 1000f;
+    public int RewardLength = 50;
+    private float RewardLength_in_sec;
     public int reward_counter = 0;
 
     #endregion
@@ -83,10 +82,7 @@ public class MainTask : MonoBehaviour
     public int trials_win;
     public int trials_lose;
     [System.NonSerialized] public int current_trial;
-<<<<<<< HEAD
-=======
 
->>>>>>> 8d84b20 (Commenting thoroughly)
     // States
     public int current_state;
     [System.NonSerialized] public int last_state;
@@ -104,9 +100,9 @@ public class MainTask : MonoBehaviour
     private static Diagnostics.Stopwatch stopwatch = new Diagnostics.Stopwatch();
 
     // Obstacles 
-    public float[] obstacles_x_pos = { -15, -10, -5, 0, 5, 10, 15 };
-    public float[] obstacles_z_pos = { 5, 10, 15, 20, 25, 30, 35 };
-    public bool randomizeRocksPosition = true;
+    [HideInInspector] public float[] obstacles_x_pos = { -15, -10, -5, 0, 5, 10, 15 };
+    [HideInInspector] public float[] obstacles_z_pos = { 5, 10, 15, 20, 25, 30, 35 };
+    private bool randomizeRocksPosition = true;
 
     #endregion
 
@@ -116,11 +112,10 @@ public class MainTask : MonoBehaviour
 
     public string file_name_positions;
     public List<Vector3> target_positions = new List<Vector3>(); // --> List, because changes size during runtime
-    public bool randomizeTargetsPosition = true;
+    private bool randomizeTargetsPosition = true;
     GameObject[] targets;
     public int rewardedTargets = 0;
     [System.NonSerialized] public GameObject TargetPrefab;
-    public Vector3 CorrectTargetCurrentPosition;
 
     // Materials
     [System.NonSerialized] public Material initial_grey;
@@ -174,7 +169,6 @@ public class MainTask : MonoBehaviour
         // Setup
         UnityEngine.Random.InitState(seed);
         System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
-        RewardLength_in_sec = RewardLength / 1000f;
         first_frame = true;
 
         // States
@@ -232,6 +226,8 @@ public class MainTask : MonoBehaviour
     {
         frame_number++;
 
+        RewardLength_in_sec = RewardLength / 1000f;
+
         // Start on first operating frame
         if (first_frame) 
         {
@@ -241,6 +237,11 @@ public class MainTask : MonoBehaviour
             // Send START trigger
             ardu.SendStartRecordingOE();           
             first_frame = false;
+
+            // Disable movement
+            player.GetComponent<Movement>().allow_backwards = 0;
+            player.GetComponent<Movement>().allow_forwards = 0;
+            player.GetComponent<Movement>().allow_horizontal = 0;
         }
 
         // Check if the player is moving the joystick
@@ -259,14 +260,6 @@ public class MainTask : MonoBehaviour
                 if (PupilDataStreamScript.subsCtrl.IsConnected || RequestControllerScript.ans)
                 {
                     current_state = -1;
-                }
-
-                if (current_state == -1)
-                {
-                    // Disable movement
-                    player.GetComponent<Movement>().restrict_backwards = 0;
-                    player.GetComponent<Movement>().restrict_forwards = 0;
-                    player.GetComponent<Movement>().restrict_horizontal = 0;
                 }
 
                 break;
@@ -354,12 +347,12 @@ public class MainTask : MonoBehaviour
                 #endregion
 
                 #region State End (executed once upon exiting)
-                if (notMovingForTime(BASELINE_duration))
+                if (!isMoving && ((Time.time - lastevent) > BASELINE_duration))
                 {
                     // Enable movement
-                    player.GetComponent<Movement>().restrict_backwards = 1;
-                    player.GetComponent<Movement>().restrict_forwards = 1;
-                    player.GetComponent<Movement>().restrict_horizontal = 1;
+                    player.GetComponent<Movement>().allow_backwards = 1;
+                    player.GetComponent<Movement>().allow_forwards = 1;
+                    player.GetComponent<Movement>().allow_horizontal = 1;
 
                     // Go to MOVEMENT state
                     current_state = 1;
@@ -701,9 +694,9 @@ public class MainTask : MonoBehaviour
         player_rb.rotation = Quaternion.identity;
 
         // Enable player movement 
-        player.GetComponent<Movement>().restrict_backwards = 0;
-        player.GetComponent<Movement>().restrict_forwards = 0;
-        player.GetComponent<Movement>().restrict_horizontal = 0;
+        player.GetComponent<Movement>().allow_backwards = 0;
+        player.GetComponent<Movement>().allow_forwards = 0;
+        player.GetComponent<Movement>().allow_horizontal = 0;
     }
 
     #endregion

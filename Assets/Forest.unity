@@ -1040,6 +1040,7 @@ MonoBehaviour:
   seed: 1
   starttime: 0
   frame_number: 0
+  RewardLength: 50
   reward_counter: 0
   trials_win: 0
   trials_lose: 0
@@ -1060,14 +1061,12 @@ MonoBehaviour:
   - 25
   - 30
   - 35
-  randomizeRocksPosition: 1
-  file_name_positions: custom_positions_2palle
+  file_name_positions: custom_positions_4palle
   target_positions: []
-  randomizeTargetsPosition: 1
-  CorrectTargetCurrentPosition: {x: 0, y: 0, z: 0}
-  BASELINE_duration: 1
+  rewardedTargets: 0
+  BASELINE_duration: 0.005
   INTERTRIAL_duration: 1
-  MOVEMENT_maxduration: 20
+  MOVEMENT_maxduration: 30
   RT_maxduration: 2
 --- !u!114 &1239289646
 MonoBehaviour:
@@ -1081,9 +1080,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3d762135f370c81459d7e16c3841f003, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ardu_working: 0
-  testing: 0
-  COM: COM10
+  COM: COM11
   ax1: 0
   ax2: 0
   reward_counter: 0
@@ -1682,7 +1679,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 120
+  field of view: 60
   orthographic: 0
   orthographic size: 5
   m_Depth: 0
@@ -1801,7 +1798,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1913868724617376015}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 980d34c50a6ca594e9711aa1902f5509, type: 3}
   m_Name: 
@@ -1948,9 +1945,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   presstime: 0
   speed: 2.5
-  restrict_horizontal: 1
-  restrict_backwards: 1
-  restrict_forwards: 1
+  allow_horizontal: 1
+  allow_backwards: 1
+  allow_forwards: 1
   reverse_Xaxis: 0
   reverse_Yaxis: 0
 --- !u!4 &1913868726121276997
@@ -2020,7 +2017,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 120
+  field of view: 60
   orthographic: 0
   orthographic size: 5
   m_Depth: 0
@@ -2105,7 +2102,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1913868726121276998}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 980d34c50a6ca594e9711aa1902f5509, type: 3}
   m_Name: 
