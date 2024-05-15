@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.59517455, g: 0.6807535, b: 0.75270545, a: 1}
+  m_IndirectSpecularColor: {r: 0.59517413, g: 0.68075246, b: 0.7527039, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -1036,33 +1036,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MEF: ciuffa
-  path_to_data: C:\Users\admin\Desktop\Registrazioni_VR_FAKE
+  path_to_data: C:\Users\edoar\Documents\Fattori_lab\test_data_folder
   seed: 1
   starttime: 0
   frame_number: 0
   RewardLength: 50
   reward_counter: 0
   trials_win: 0
+  taken_targets: 0
   trials_lose: 0
   current_state: 0
-  obstacles_x_pos:
-  - -15
-  - -10
-  - -5
-  - 0
-  - 5
-  - 10
-  - 15
-  obstacles_z_pos:
-  - 5
-  - 10
-  - 15
-  - 20
-  - 25
-  - 30
-  - 35
-  file_name_positions: custom_positions_4palle
-  target_positions: []
+  numTargets: 3
+  obst_perTarget: 1
+  numObstacles: 0
+  possibleLocations: []
   rewardedTargets: 0
   BASELINE_duration: 0.005
   INTERTRIAL_duration: 1
@@ -2278,7 +2265,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1913868726606073930}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 980d34c50a6ca594e9711aa1902f5509, type: 3}
   m_Name: 

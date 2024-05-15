@@ -80,6 +80,7 @@ public class MainTask : MonoBehaviour
 
     // Trials
     public int trials_win;
+    public int taken_targets;
     public int trials_lose;
     [System.NonSerialized] public int current_trial;
 
@@ -99,23 +100,26 @@ public class MainTask : MonoBehaviour
     private static bool isMoving = false;
     private static Diagnostics.Stopwatch stopwatch = new Diagnostics.Stopwatch();
 
-    // Obstacles 
-    [HideInInspector] public float[] obstacles_x_pos = { -15, -10, -5, 0, 5, 10, 15 };
-    [HideInInspector] public float[] obstacles_z_pos = { 5, 10, 15, 20, 25, 30, 35 };
-    private bool randomizeRocksPosition = true;
-
     #endregion
 
-    #region Target Info
+    #region Target and Obstacles Info
 
-    [Header("Target Info")]
+    [Header("Targets and Obstacles")]
 
-    public string file_name_positions;
-    public List<Vector3> target_positions = new List<Vector3>(); // --> List, because changes size during runtime
-    private bool randomizeTargetsPosition = true;
+    public int numTargets = 8;
+    public int obst_perTarget = 1;
+    public int numObstacles;
+    private Vector2 location_grid_limitX = new Vector2(-10f, 10f);
+    private Vector2 location_grid_limitZ = new Vector2(0, 20);
+    private int numCellsinGrid = 4;
+    private Vector2 forbiddenZoneX = new Vector2(-1, 1);
+    private Vector2 forbiddenZoneZ = new Vector2(0, 2);
+    public List<Vector2> possibleLocations;
+    private bool randomizePosition = true;
+
+    [System.NonSerialized] public GameObject TargetPrefab;
     GameObject[] targets;
     public int rewardedTargets = 0;
-    [System.NonSerialized] public GameObject TargetPrefab;
 
     // Materials
     [System.NonSerialized] public Material initial_grey;
@@ -179,6 +183,7 @@ public class MainTask : MonoBehaviour
         // Trials
         current_trial = 0;
         trials_win = 0;
+        taken_targets = 0;
         trials_lose = 0;
    
         // GameObjects
@@ -207,10 +212,6 @@ public class MainTask : MonoBehaviour
 
         // Target Prefab
         TargetPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Material/Fruit_Prefab.prefab");
-
-        // Import targets coordinates from csv file into target_positions list
-        // and initiate the targets in a disable state (i.e invisible)
-        InstantiateTargets(target_positions);
 
         // Black pixels (markers for scripts syncing)
         markerObject_M = GameObject.CreatePrimitive(PrimitiveType.Quad);
@@ -302,20 +303,17 @@ public class MainTask : MonoBehaviour
                     hideMarkerBlack(markerObject_L);
 
                     // Instantiate rocks
-                    // if desired, randomize disposition of rocks and/or targets
-                    randomizeScene(randomizeTargetsPosition, randomizeRocksPosition, targets, obstacles_x_pos, obstacles_z_pos);
-
-                    // Reset number of collected targets
-                    rewardedTargets = 0;
+                    // if desired, randomize disposition of rocks and targets
+                    if (randomizePosition)
+                    {
+                        RandomizeEnvWithGrid();
+                    }
 
                     // Change target material 
                     for (int i = 0; i < targets.Length; i++)
                     {
                         changeTargetMaterial(targets[i], red);
                     }
-
-                    // Make targets visible
-                    showTargets(targets);
 
                     // Move to state 0
                     current_state = 0;
@@ -338,6 +336,10 @@ public class MainTask : MonoBehaviour
                     lastevent = Time.time;
                     last_state = current_state;
                     error_state = "";
+
+                    // Make targets and obstacles visible
+                    showTargets(targets);
+                    environment.GetComponent<Rocks>().showRocks();
 
                 }
                 #endregion
@@ -388,14 +390,8 @@ public class MainTask : MonoBehaviour
                 {
 
                     // Check if collided object is a target or not
-                    bool isRock = Regex.IsMatch(player.GetComponent<Movement>().CollidedObject.tag, @"Rock[1-5]$"); ;
-                    bool isTree = Regex.IsMatch(player.GetComponent<Movement>().CollidedObject.tag, @"\btree\b");
-                    if (isRock || isTree)
-                    {
-                        error_state = $"ERR: touched rock/tree obstacle at {player.GetComponent<Movement>().CollidedObject.transform.position}";
-                        current_state = -99;
-                    }
-                    else // Target
+                    bool isTarget = Regex.IsMatch(player.GetComponent<Movement>().CollidedObject.name, @"Fruit_Prefab_\d+"); ;
+                    if (isTarget)
                     {
                         // Change target material
                         for (int i = 0; i < targets.Length; i++)
@@ -413,6 +409,11 @@ public class MainTask : MonoBehaviour
                                 }
                             }
                         }
+                    }
+                    else
+                    {
+                        error_state = $"ERR: touched obstacle at {player.GetComponent<Movement>().CollidedObject.transform.position}";
+                        current_state = -99;
                     }
 
                 }
@@ -514,11 +515,16 @@ public class MainTask : MonoBehaviour
 
                     // Go to BASELINE
                     current_state = 0;
+
+                    // Reset error string
                     error_state = "";
 
-                    // Do not randomize rocks' or targets' positions
-                    randomizeRocksPosition = false;
-                    randomizeTargetsPosition = false;
+                    // Disable targets and obstacles
+                    hideTargets(targets);
+                    environment.GetComponent<Rocks>().hideRocks();
+
+                    // Do not randomize rocks' and targets' positions
+                    randomizePosition = false;
                 }
                 #endregion
 
@@ -548,6 +554,7 @@ public class MainTask : MonoBehaviour
                     ardu.SendReward(RewardLength);
 
                     // Increase number of collected targets
+                    taken_targets += 1;
                     rewardedTargets += 1;
 
                 }
@@ -591,6 +598,9 @@ public class MainTask : MonoBehaviour
                     // Send reward for the single target
                     ardu.SendReward(RewardLength);
 
+                    // Increase number of collected targets
+                    taken_targets += 1;
+
                 }
                 #endregion
 
@@ -607,12 +617,11 @@ public class MainTask : MonoBehaviour
                     // Reset win
                     reset_win();
 
+                    // Randomize rocks' and targets' positions
+                    randomizePosition = true;
+
                     // Go to INTERTRIAL state
                     current_state = -1;
-
-                    // Randomize rocks' or targets' positions
-                    randomizeRocksPosition = true;
-                    randomizeTargetsPosition = true;
 
                 }
                 #endregion
@@ -671,6 +680,9 @@ public class MainTask : MonoBehaviour
         // Delete current rocks
         environment.GetComponent<Rocks>().deleteRocks();
 
+        // Reset number of collected targets
+        rewardedTargets = 0;
+
         // Count trial
         trials_win++;
     }
@@ -701,62 +713,79 @@ public class MainTask : MonoBehaviour
 
     #endregion
 
-    #region Targets
+    #region Scene and obstacles
 
-    private void LoadPositionsFromCSV(List<Vector3> target_positions)
+    void RandomizeEnvWithGrid()
     {
-        string filePath = Application.dataPath + "/" + file_name_positions + ".csv";
-        if (File.Exists(filePath))
-        {
-            using (StreamReader reader = new StreamReader(filePath))
-            {
-                string line = reader.ReadLine(); // Salta la riga degli header se presente
+        numObstacles = numTargets * obst_perTarget;
+        List<Vector2> possibleLocations = GeneratePossibleLocations();
+        possibleLocations = RemoveForbiddenLocations(possibleLocations);
+        SetTargets(possibleLocations);
+        SetObstacles(numObstacles, possibleLocations);
+    }
 
-                while (!reader.EndOfStream)
-                {
-                    line = reader.ReadLine();
-                    string[] fields = line.Split(',');
-                    if (fields.Length >= 3)
-                    {
-                        float x, y, z;
-                        if (float.TryParse(fields[0], NumberStyles.Float, CultureInfo.InvariantCulture, out x) &&
-                            float.TryParse(fields[1], NumberStyles.Float, CultureInfo.InvariantCulture, out y) &&
-                            float.TryParse(fields[2], NumberStyles.Float, CultureInfo.InvariantCulture, out z))
-                        {
-                            Vector3 position = new Vector3(x, y, z);
-                            target_positions.Add(position);
-                        }
-                        else
-                        {
-                            Debug.LogWarning("Impossible to convert coordinates in numbers: " + line);
-                        }
-                    }
-                    else
-                    {
-                        Debug.LogWarning("Line has not enough coordinates: " + line);
-                    }
-                }
+    public List<Vector2> GeneratePossibleLocations()
+    {
+
+        List<Vector2> possibleLocations = new List<Vector2>();
+
+        float stepX = (location_grid_limitX.y - location_grid_limitX.x) / (numCellsinGrid - 1);
+        float stepZ = (location_grid_limitZ.y - location_grid_limitZ.x) / (numCellsinGrid - 1);
+
+        for (float x = location_grid_limitX.x; x <= location_grid_limitX.y; x += stepX)
+        {
+            for (float y = location_grid_limitZ.x; y <= location_grid_limitZ.y; y += stepZ)
+            {
+                possibleLocations.Add(new Vector2(x, y));
             }
         }
-        else
+
+        return possibleLocations;
+    }
+
+    public List<Vector2> RemoveForbiddenLocations(List<Vector2> possibleLocations)
+    {
+        possibleLocations.RemoveAll(pos =>
+            pos.x >= forbiddenZoneX.x && pos.x <= forbiddenZoneX.y &&
+            pos.y >= forbiddenZoneZ.x && pos.y <= forbiddenZoneZ.y);
+
+        return possibleLocations;
+    }
+
+    void SetObstacles(int numObstacles, List<Vector2> possibleLocations)
+    {
+        for (int i = 0; i < numObstacles; i++)
         {
-            Debug.LogError("File does not exist: " + filePath);
+            int idx = UnityEngine.Random.Range(0, possibleLocations.Count);
+            Vector2 newObstaclePos = possibleLocations[idx];
+            possibleLocations.RemoveAt(idx);
+
+            environment.GetComponent<Rocks>().MakeRock(newObstaclePos.x, newObstaclePos.y);
         }
     }
 
-    private void InstantiateTargets(List<Vector3> target_positions)
+    #endregion
+
+    #region Targets
+
+    void SetTargets(List<Vector2> possibleLocations)
     {
 
-        // Import targets coordinates from csv file into target_positions list
-        LoadPositionsFromCSV(target_positions);
-
         // Instantiate targets (switched off)
-        targets = new GameObject[target_positions.Count];
+        targets = new GameObject[numTargets];
 
-        for (int i = 0; i < targets.Length; i++)
+        for (int i = 0; i < numTargets; i++)
         {
+            int idx = UnityEngine.Random.Range(0, possibleLocations.Count);
+            Vector2 newTargetPos = possibleLocations[idx];
+            possibleLocations.RemoveAt(idx);
+
+            // Add y dimension
+            Vector3 targetPos3D = new Vector3(newTargetPos.x, 0.5f, newTargetPos.y);
+
+
             // Instantiate
-            targets[i] = Instantiate(TargetPrefab, target_positions[i], Quaternion.Euler(0, 0, 0), environment.transform);
+            targets[i] = Instantiate(TargetPrefab, targetPos3D, Quaternion.Euler(0f, 0f, 0f), environment.transform);
             targets[i].name = $"{TargetPrefab.name}_" + i.ToString();
 
             // Set as inactive (invisible)
@@ -774,7 +803,7 @@ public class MainTask : MonoBehaviour
 
             // Save target as soon as becomes visible
             GetComponent<Saver>().addObject(targets[i].name,
-                $"Target_{i}",
+                "Target",
                 targets[i].transform.position.x,
                 targets[i].transform.position.y,
                 targets[i].transform.position.z,
@@ -808,22 +837,6 @@ public class MainTask : MonoBehaviour
     {
         target.GetComponent<MeshRenderer>().material = mat;
     }
-
-    //private static bool allTargetsTaken(GameObject[] targets, Material reward_material)
-    //{    
-    //    for (int i = 0; i < targets.Length; i++)
-    //    {
-    //        // Check if material is NOT reward material, i.e. that of the taken target
-    //        if (targets[i].GetComponent<MeshRenderer>().material.mainTexture != reward_material.mainTexture)
-    //        {
-    //            // Not all targets are taken
-    //            return false;
-    //        }
-    //    }
-
-    //    // All targets are taken
-    //    return true;
-    //}
 
     #endregion
 
@@ -876,79 +889,6 @@ public class MainTask : MonoBehaviour
         // Save marker end when it stops being visible
         GetComponent<Saver>().addObjectEnd(markerObj.GetInstanceID().ToString());
     }
-    #endregion
-
-    #region Scene and obstacles
-
-    private void randomizeScene(bool randomizeTargets, bool randomizeRocks, GameObject[] targets, float[] x_pos_array, float[] z_pos_array)
-    {
-        // Sanity checks
-        if (targets.Length > x_pos_array.Length || targets.Length > z_pos_array.Length)
-        {
-            Debug.LogError("There are more targets than available positions. " +
-                "Please, increase number of obstacles positions or decrease number of targets");
-            QuitGame();
-        }
-
-        // Shuffle position arrays
-        Shuffle(x_pos_array);
-        Shuffle(z_pos_array);
-
-        // Randomize rocks, if desired
-        if (randomizeRocks)
-        {
-            instantiateRandomRocks(targets, x_pos_array, z_pos_array);
-        }
-
-        // Randomize targets, if desired
-        if (randomizeTargets)
-        {
-            for (int i = 0; i < targets.Length; i++)
-            {
-
-                if (z_pos_array[i] > 15) //artificially make it less likely to just be there
-                {
-                    targets[i].transform.position = new Vector3(x_pos_array[i], 0.5f, z_pos_array[i]);
-                }
-                else
-                {
-                    targets[i].transform.position = new Vector3(x_pos_array[i], 0.5f, z_pos_array[z_pos_array.Length - 1]);
-                }
-            }
-        }
-
-    }
-
-    private void instantiateRandomRocks(GameObject[] targets, float[] x_pos_array, float[] z_pos_array)
-    {
-        // Instantiate new rocks, randomly disposed
-        for (int i = targets.Length; i < x_pos_array.Length; i++)
-        {
-            environment.GetComponent<Rocks>().MakeRock(x_pos_array[i], z_pos_array[i]);
-        }
-
-        for (int i = 0; i < x_pos_array.Length - 1; i++)
-        {
-            environment.GetComponent<Rocks>().MakeRock(x_pos_array[i], z_pos_array[i + 1]);
-            environment.GetComponent<Rocks>().MakeRock(x_pos_array[i + 1], z_pos_array[i]);
-        }
-
-        // Save new rocks
-        environment.GetComponent<Rocks>().saveObjects();
-    }
-
-    private void Shuffle(float[] array)
-    {
-        int n = array.Length - 1;
-        for (; n > 0; n--)
-        {
-            int r = UnityEngine.Random.Range(0, n);
-            float t = array[r];
-            array[r] = array[n];
-            array[n] = t;
-        }
-    }
-
     #endregion
 
     private static bool notMovingForTime(float seconds)

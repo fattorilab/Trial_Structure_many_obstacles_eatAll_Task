@@ -206,6 +206,7 @@ public class Saver : MonoBehaviour
         // Trials
         PerFrameData[(PerFrameData.Count - 1)].Add((main.current_trial).ToString("F5"));
         PerFrameData[(PerFrameData.Count - 1)].Add((main.trials_win).ToString("F5"));
+        PerFrameData[(PerFrameData.Count - 1)].Add((main.taken_targets).ToString("F5"));
         // Condition
         PerFrameData[(PerFrameData.Count - 1)].Add((main.current_condition).ToString("F5"));
         // State
@@ -308,7 +309,7 @@ public class Saver : MonoBehaviour
 
         #region Save frame data
         string general_vars = "Unity_timestamp; Frame; ";
-        string task_general_vars = "Trial; Correct Trials; Current_condition; Current_state; Error_type; Reward_count; ";
+        string task_general_vars = "Trial; Correct Trials; Taken targets; Current_condition; Current_state; Error_type; Reward_count; ";
         // Change task_specific_vars as desired (AddFrameData() method must be changed accordingly)
         string task_specific_vars = ""; // correct_target; interval; 
         string move_vars = "player_x_arduino; player_y_arduino; player_x;  player_y; player_z; player_x_rot; player_y_rot; player_z_rot; ";
